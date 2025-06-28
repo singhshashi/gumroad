@@ -143,6 +143,7 @@ class Link < ApplicationRecord
   has_many :product_cached_values, foreign_key: :product_id
   has_one :upsell, -> { upsell.alive }, foreign_key: :product_id
   has_and_belongs_to_many :custom_fields, join_table: "custom_fields_products", foreign_key: "product_id"
+  has_and_belongs_to_many :social_proof_widgets, join_table: "social_proof_widgets_links", foreign_key: "link_id"
   has_one :product_refund_policy, foreign_key: "product_id"
   has_one :staff_picked_product, foreign_key: "product_id"
   has_one :custom_domain, -> { alive }, foreign_key: "product_id"
@@ -1196,6 +1197,14 @@ class Link < ApplicationRecord
         communities.alive.each(&:mark_deleted!)
       end
     end
+  end
+
+  def social_proof_widgets_for_display
+    user_widgets = user.social_proof_widgets.alive.is_enabled
+    product_specific_widgets = user_widgets.where(universal: false).joins(:links).where(links: { id: id })
+    universal_widgets = user_widgets.where(universal: true)
+    
+    product_specific_widgets.presence || universal_widgets.limit(1)
   end
 
   protected

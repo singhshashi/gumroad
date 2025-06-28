@@ -13,4 +13,9 @@ class SellerContext
     @user = user
     @seller = seller
   end
+
+  # Delegate social_proof_widgets to the user
+  def social_proof_widgets
+    user&.social_proof_widgets
+  end
 end

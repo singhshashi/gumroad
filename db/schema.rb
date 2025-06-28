@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_25_212934) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_26_103026) do
   create_table "active_storage_attachments", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "name", limit: 191, null: false
     t.string "record_type", limit: 191, null: false
@@ -2075,6 +2075,38 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_25_212934) do
     t.index ["variant_id"], name: "index_skus_variants_on_variant_id"
   end
 
+  create_table "social_proof_widgets", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.boolean "universal", default: false, null: false
+    t.text "title"
+    t.text "description"
+    t.string "cta_text"
+    t.string "cta_type", default: "button", null: false
+    t.string "image_type", default: "product_thumbnail", null: false
+    t.integer "flags", default: 0
+    t.text "json_data"
+    t.string "external_id", limit: 191, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_social_proof_widgets_on_deleted_at"
+    t.index ["external_id"], name: "index_social_proof_widgets_on_external_id", unique: true
+    t.index ["user_id", "universal"], name: "index_social_proof_widgets_on_user_id_and_universal"
+    t.index ["user_id"], name: "index_social_proof_widgets_on_user_id"
+  end
+
+  create_table "social_proof_widgets_links", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "social_proof_widget_id", null: false
+    t.bigint "link_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["link_id", "social_proof_widget_id"], name: "index_social_proof_widgets_links_reverse"
+    t.index ["link_id"], name: "index_social_proof_widgets_links_on_link_id"
+    t.index ["social_proof_widget_id", "link_id"], name: "index_social_proof_widgets_links_unique", unique: true
+    t.index ["social_proof_widget_id"], name: "index_social_proof_widgets_links_on_social_proof_widget_id"
+  end
+
   create_table "staff_picked_products", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.datetime "deleted_at"
@@ -2717,4 +2749,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_25_212934) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "social_proof_widgets", "users"
+  add_foreign_key "social_proof_widgets_links", "links"
+  add_foreign_key "social_proof_widgets_links", "social_proof_widgets"
 end

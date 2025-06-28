@@ -477,6 +477,10 @@ Rails.application.routes.draw do
         get :cart_item, on: :collection
         get :statistics, on: :member
       end
+      resources :social_proof_widgets, only: %i[index show create update destroy] do
+        get :paged, on: :collection
+        get :analytics, on: :collection
+      end
       namespace :upsells do
         resources :products, only: [:index, :show]
       end
@@ -915,6 +919,13 @@ Rails.application.routes.draw do
           collection do
             resource :unique_permalink, only: [:show], controller: "utm_links/unique_permalinks", as: :utm_link_unique_permalink
             resources :stats, only: [:index], controller: "utm_links/stats", as: :utm_links_stats
+          end
+        end
+        resources :social_proof_widgets, only: [] do
+          member do
+            post :impression
+            post :click
+            post :close
           end
         end
         resources :product_public_files, only: [:create]
