@@ -15,7 +15,7 @@ import { showAlert } from "$app/components/server-components/Alert";
 import { Toggle } from "$app/components/Toggle";
 import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
 
-import placeholder from "$assets/images/placeholders/discounts.png";
+import placeholder from "$assets/images/placeholders/social_widgets.png";
 
 type Product = {
   id: string;
