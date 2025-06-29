@@ -10,10 +10,10 @@ import { Button } from "$app/components/Button";
 import { Layout, Page } from "$app/components/CheckoutDashboard/Layout";
 import { Icon } from "$app/components/Icons";
 import { Pagination, PaginationProps } from "$app/components/Pagination";
+import { Popover } from "$app/components/Popover";
 import { showAlert } from "$app/components/server-components/Alert";
 import { Toggle } from "$app/components/Toggle";
 import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
-import { useDebouncedCallback } from "$app/components/useDebouncedCallback";
 
 import placeholder from "$assets/images/placeholders/discounts.png";
 
@@ -72,9 +72,11 @@ type SocialProofWidgetsPageProps = {
 const SocialProofWidgetsPage = ({ widgets, products, image_type_options, cta_type_options, pagination, pages }: SocialProofWidgetsPageProps) => {
     const [widgetsList, setWidgetsList] = React.useState(widgets);
     const [isLoading, setIsLoading] = React.useState(false);
-    const [_searchTerm, setSearchTerm] = React.useState("");
+    const [searchTerm, setSearchTerm] = React.useState("");
+    const [isSearchPopoverOpen, setIsSearchPopoverOpen] = React.useState(false);
     const [showCreateForm, setShowCreateForm] = React.useState(false);
     const [editingWidget, setEditingWidget] = React.useState<SocialProofWidget | null>(null);
+    const searchInputRef = React.useRef<HTMLInputElement>(null);
 
     const refreshWidgets = async () => {
       try {
@@ -116,49 +118,73 @@ const SocialProofWidgetsPage = ({ widgets, products, image_type_options, cta_typ
       }
     };
 
-    const debouncedSearch = useDebouncedCallback((value: string) => {
-      setSearchTerm(value);
-      // @ts-ignore - writeQueryParams type signature issue
-      writeQueryParams({ search: value || undefined });
-      refreshWidgets();
-    }, 300);
 
     return (
       <Layout
         currentPage="social_proof_widgets"
         pages={pages}
         actions={
-          <Button onClick={handleCreateWidget} color="primary" small>
-            Create widget
-          </Button>
+          <>
+            <Popover
+              open={isSearchPopoverOpen}
+              onToggle={setIsSearchPopoverOpen}
+              aria-label="Search"
+              trigger={
+                <div className="button">
+                  <Icon name="solid-search" />
+                </div>
+              }
+            >
+              <div className="input">
+                <Icon name="solid-search" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search"
+                  value={searchTerm ?? ""}
+                  onChange={(evt) => {
+                    setSearchTerm(evt.target.value);
+                  }}
+                  onKeyDown={(evt) => {
+                    if (evt.key === "Enter") {
+                      // @ts-ignore - writeQueryParams type signature issue
+                      writeQueryParams({ search: searchTerm || undefined });
+                      refreshWidgets();
+                      setIsSearchPopoverOpen(false);
+                    }
+                  }}
+                />
+              </div>
+            </Popover>
+            <Button onClick={handleCreateWidget} color="accent">
+              New widget
+            </Button>
+          </>
         }
       >
         <div className="container">
           <div className="row">
             <div className="col-12">
               {widgetsList.length === 0 && !isLoading ? (
-                <div className="empty-state">
-                  <img src={placeholder} alt="No widgets" />
-                  <h3>Create your first social proof widget</h3>
-                  <p>
-                    Social proof widgets help increase conversion rates by showing potential customers that others have
-                    purchased your products.
-                  </p>
-                  <Button onClick={handleCreateWidget} color="primary">
-                    Create widget
-                  </Button>
+                <div className="placeholder">
+                  <figure>
+                    <img src={placeholder} />
+                  </figure>
+                  <div>
+                    <h2>Use social proof to build trust and boost conversions</h2>
+                    <p>
+                      Let your product page do the talking. Show off what's happening and get more people clicking.
+                    </p>
+                    <Button onClick={handleCreateWidget} color="accent">
+                      New widget
+                    </Button>
+                    <p>
+                      <a href="#" data-helper-prompt="How can I use social proof widgets to boost conversions?">Learn more about social proof</a>
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <>
-                  <div className="search-section">
-                    <input
-                      type="text"
-                      placeholder="Search widgets..."
-                      onChange={(e) => debouncedSearch(e.target.value)}
-                      className="search-input"
-                    />
-                  </div>
-
                   <div className="widgets-grid">
                     {widgetsList.map((widget) => (
                       <div key={widget.id} className="widget-card">
