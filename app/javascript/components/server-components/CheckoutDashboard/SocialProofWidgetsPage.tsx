@@ -74,7 +74,7 @@ const SocialProofWidgetsPage = ({ widgets, products, image_type_options, cta_typ
     const [isLoading, setIsLoading] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState("");
     const [isSearchPopoverOpen, setIsSearchPopoverOpen] = React.useState(false);
-    const [showCreateForm, setShowCreateForm] = React.useState(false);
+    const [view, setView] = React.useState<"list" | "create" | "edit">("list");
     const [editingWidget, setEditingWidget] = React.useState<SocialProofWidget | null>(null);
     const searchInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -95,12 +95,12 @@ const SocialProofWidgetsPage = ({ widgets, products, image_type_options, cta_typ
 
     const handleCreateWidget = () => {
       setEditingWidget(null);
-      setShowCreateForm(true);
+      setView("create");
     };
 
     const handleEditWidget = (widget: SocialProofWidget) => {
       setEditingWidget(widget);
-      setShowCreateForm(true);
+      setView("edit");
     };
 
     const handleDeleteWidget = async (widget: SocialProofWidget) => {
@@ -119,7 +119,7 @@ const SocialProofWidgetsPage = ({ widgets, products, image_type_options, cta_typ
     };
 
 
-    return (
+    return view === "list" ? (
       <Layout
         currentPage="social_proof_widgets"
         pages={pages}
@@ -263,25 +263,24 @@ const SocialProofWidgetsPage = ({ widgets, products, image_type_options, cta_typ
             </div>
           </div>
         </div>
-
-        {showCreateForm ? (
-          <WidgetFormModal
-            widget={editingWidget}
-            products={products}
-            imageTypeOptions={image_type_options}
-            ctaTypeOptions={cta_type_options}
-            onClose={() => setShowCreateForm(false)}
-            onSave={(widget) => {
-              if (editingWidget) {
-                setWidgetsList((prev) => prev.map((w) => (w.id === widget.id ? widget : w)));
-              } else {
-                setWidgetsList((prev) => [widget, ...prev]);
-              }
-              setShowCreateForm(false);
-            }}
-          />
-        ) : null}
       </Layout>
+    ) : (
+      <WidgetFormModal
+        widget={editingWidget}
+        products={products}
+        imageTypeOptions={image_type_options}
+        ctaTypeOptions={cta_type_options}
+        view={view}
+        onClose={() => setView("list")}
+        onSave={(widget) => {
+          if (editingWidget) {
+            setWidgetsList((prev) => prev.map((w) => (w.id === widget.id ? widget : w)));
+          } else {
+            setWidgetsList((prev) => [widget, ...prev]);
+          }
+          setView("list");
+        }}
+      />
     );
 };
 
@@ -291,6 +290,7 @@ const WidgetFormModal = ({
   products,
   imageTypeOptions,
   ctaTypeOptions,
+  view,
   onClose,
   onSave,
 }: {
@@ -298,6 +298,7 @@ const WidgetFormModal = ({
   products: Product[];
   imageTypeOptions: ImageTypeOption[];
   ctaTypeOptions: CtaTypeOption[];
+  view: "create" | "edit";
   onClose: () => void;
   onSave: (widget: SocialProofWidget) => void;
 }) => {
@@ -329,10 +330,10 @@ const WidgetFormModal = ({
       //   : await createSocialProofWidget(formData);
 
       // onSave(castSocialProofWidget(result));
-      const message = widget ? "Widget updated successfully" : "Widget created successfully";
+      const message = view === "edit" ? "Widget updated successfully" : "Widget created successfully";
       showAlert(message, "success");
     } catch (_error) {
-      const message = widget ? "Failed to update widget" : "Failed to create widget";
+      const message = view === "edit" ? "Failed to update widget" : "Failed to create widget";
       showAlert(message, "error");
     } finally {
       setIsSubmitting(false);
@@ -340,149 +341,203 @@ const WidgetFormModal = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>{widget ? "Edit Widget" : "Create Widget"}</h3>
-          <button onClick={onClose} className="btn-close">
-            ×
-          </button>
+    <div className="fixed-aside" style={{ display: "contents" }}>
+      <header className="sticky-top">
+        <h1>{view === "edit" ? "Edit Widget" : "Create Widget"}</h1>
+        <div className="actions">
+          <Button onClick={onClose} disabled={isSubmitting}>
+            <Icon name="x-square" />
+            Cancel
+          </Button>
+          <Button type="submit" color="accent" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : view === "edit" ? "Update" : "Create"}
+          </Button>
         </div>
-
-        <form onSubmit={handleSubmit} className="modal-body">
-          <div className="form-group">
-            <label htmlFor="name">Name *</label>
-            <input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              required
-              maxLength={255}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>
+      </header>
+      <main className="squished">
+        <form onSubmit={handleSubmit}>
+          <section>
+            <fieldset>
+              <legend>
+                <label htmlFor="name">Widget name</label>
+              </legend>
               <input
-                type="checkbox"
-                checked={formData.universal}
-                onChange={(e) => setFormData((prev) => ({ ...prev, universal: e.target.checked }))}
+                id="name"
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Community members"
+                required
+                maxLength={255}
               />
-              Universal (show on all products)
-            </label>
-          </div>
+            </fieldset>
 
-          {!formData.universal && (
-            <div className="form-group">
-              <label htmlFor="products">Select Products</label>
-              <select
-                id="products"
-                multiple
-                value={formData.link_ids}
-                onChange={(e) => {
-                  const selectedIds = Array.from(e.target.selectedOptions, (option) => option.value);
-                  setFormData((prev) => ({ ...prev, link_ids: selectedIds }));
-                }}
-              >
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+            <fieldset>
+              <legend>Products</legend>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={formData.universal}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, universal: e.target.checked }))}
+                />
+                All products
+              </label>
+            </fieldset>
 
-          <div className="form-group">
-            <label htmlFor="title">Title</label>
-            <input
-              id="title"
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-              maxLength={500}
-            />
-          </div>
+            {!formData.universal && (
+              <fieldset>
+                <legend>
+                  <label htmlFor="products">Select products</label>
+                </legend>
+                <select
+                  id="products"
+                  multiple
+                  value={formData.link_ids}
+                  onChange={(e) => {
+                    const selectedIds = Array.from(e.target.selectedOptions, (option) => option.value);
+                    setFormData((prev) => ({ ...prev, link_ids: selectedIds }));
+                  }}
+                >
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </select>
+              </fieldset>
+            )}
 
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              maxLength={1000}
-              rows={3}
-            />
-          </div>
+            <fieldset>
+              <legend>
+                <label htmlFor="title">Title</label>
+              </legend>
+              <input
+                id="title"
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="Join [total_sales] members today!"
+                maxLength={500}
+              />
+            </fieldset>
 
-          <div className="form-group">
-            <label htmlFor="cta_type">Call to Action Type</label>
-            <TypeSafeOptionSelect
-              id="cta_type"
-              value={formData.cta_type}
-              options={ctaTypeOptions}
-              onChange={(value) => setFormData((prev) => ({ ...prev, cta_type: value }))}
-            />
-          </div>
+            <fieldset>
+              <legend>
+                <label htmlFor="description">Description</label>
+              </legend>
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Get lifetime access and start your journey now."
+                maxLength={1000}
+                rows={3}
+              />
+            </fieldset>
 
-          {formData.cta_type !== "none" && (
-            <div className="form-group">
-              <label htmlFor="cta_text">Call to Action Text</label>
+            <fieldset>
+              <legend>
+                <label htmlFor="cta_text">Call to action text</label>
+              </legend>
               <input
                 id="cta_text"
                 type="text"
                 value={formData.cta_text}
                 onChange={(e) => setFormData((prev) => ({ ...prev, cta_text: e.target.value }))}
+                placeholder="Purchase Now - [price]"
                 maxLength={255}
               />
-            </div>
-          )}
+            </fieldset>
 
-          <div className="form-group">
-            <label htmlFor="image_type">Image Type</label>
-            <TypeSafeOptionSelect
-              id="image_type"
-              value={formData.image_type}
-              options={imageTypeOptions}
-              onChange={(value) => setFormData((prev) => ({ ...prev, image_type: value }))}
-            />
-          </div>
-
-          {formData.image_type === "custom_image" && (
-            <div className="form-group">
-              <label htmlFor="custom_image_url">Custom Image URL</label>
-              <input
-                id="custom_image_url"
-                type="url"
-                value={formData.custom_image_url}
-                onChange={(e) => setFormData((prev) => ({ ...prev, custom_image_url: e.target.value }))}
-                required
+            <fieldset>
+              <legend>
+                <label htmlFor="cta_type">Call to action</label>
+              </legend>
+              <TypeSafeOptionSelect
+                id="cta_type"
+                value={formData.cta_type}
+                options={ctaTypeOptions}
+                onChange={(value) => setFormData((prev) => ({ ...prev, cta_type: value }))}
               />
-            </div>
-          )}
+            </fieldset>
 
-          <div className="form-group">
-            <label>
-              <input
-                type="checkbox"
-                checked={formData.enabled}
-                onChange={(e) => setFormData((prev) => ({ ...prev, enabled: e.target.checked }))}
+            <fieldset>
+              <legend>
+                <label htmlFor="image_type">Image source</label>
+              </legend>
+              <TypeSafeOptionSelect
+                id="image_type"
+                value={formData.image_type}
+                options={imageTypeOptions}
+                onChange={(value) => setFormData((prev) => ({ ...prev, image_type: value }))}
               />
-              Enabled
-            </label>
-          </div>
+            </fieldset>
 
-          <div className="modal-footer">
-            <Button type="button" onClick={onClose} outline>
-              Cancel
-            </Button>
-            <Button type="submit" color="primary" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : widget ? "Update" : "Create"}
-            </Button>
-          </div>
+            {formData.image_type === "custom_image" && (
+              <fieldset>
+                <legend>
+                  <label htmlFor="custom_image_url">Custom image URL</label>
+                </legend>
+                <input
+                  id="custom_image_url"
+                  type="url"
+                  value={formData.custom_image_url}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, custom_image_url: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                  required
+                />
+              </fieldset>
+            )}
+
+            <fieldset>
+              <legend>Settings</legend>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={formData.enabled}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, enabled: e.target.checked }))}
+                />
+                Enabled
+              </label>
+            </fieldset>
+          </section>
         </form>
-      </div>
+      </main>
+      <aside>
+        <div style={{ padding: "var(--spacer-4)", position: "sticky", top: "var(--spacer-4)" }}>
+          <h2>Preview</h2>
+          <div style={{
+            border: "1px solid var(--border-color)",
+            borderRadius: "var(--border-radius-2)",
+            padding: "var(--spacer-4)",
+            background: "white",
+            marginTop: "var(--spacer-4)",
+            minHeight: "200px"
+          }}>
+            {formData.title && <h4 style={{ margin: "0 0 var(--spacer-2) 0" }}>{formData.title}</h4>}
+            {formData.description && <p style={{ margin: "0 0 var(--spacer-3) 0", color: "var(--text-muted)" }}>{formData.description}</p>}
+            {formData.cta_text && formData.cta_type !== "none" && (
+              <div style={{
+                marginTop: "var(--spacer-3)",
+                padding: "var(--spacer-2) var(--spacer-4)",
+                backgroundColor: formData.cta_type === "button" ? "var(--accent)" : "transparent",
+                color: formData.cta_type === "button" ? "white" : "var(--accent)",
+                border: formData.cta_type === "link" ? "none" : "1px solid var(--accent)",
+                borderRadius: "var(--border-radius-1)",
+                display: "inline-block",
+                textDecoration: formData.cta_type === "link" ? "underline" : "none",
+                cursor: "pointer",
+                fontSize: "0.875rem"
+              }}>
+                {formData.cta_text}
+              </div>
+            )}
+            {!formData.title && !formData.description && !formData.cta_text && (
+              <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Your widget preview will appear here</p>
+            )}
+          </div>
+        </div>
+      </aside>
     </div>
   );
 };
