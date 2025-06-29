@@ -13,6 +13,7 @@ import { Pagination, PaginationProps } from "$app/components/Pagination";
 import { Popover } from "$app/components/Popover";
 import { showAlert } from "$app/components/server-components/Alert";
 import { Toggle } from "$app/components/Toggle";
+import { Select } from "$app/components/Select";
 import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
 
 import placeholder from "$assets/images/placeholders/social_widgets.png";
@@ -373,7 +374,22 @@ const WidgetFormModal = ({
             </fieldset>
 
             <fieldset>
-              <legend>Products</legend>
+              <legend>
+                <label htmlFor="products">Products</label>
+              </legend>
+              <Select
+                inputId="products"
+                instanceId="products"
+                options={products.map(({ id, name: label }) => ({ id, label }))}
+                value={products.filter(({ id }) => formData.link_ids.includes(id)).map(({ id, name }) => ({ id, label: name }))}
+                onChange={(selectedOptions) =>
+                  setFormData((prev) => ({ ...prev, link_ids: selectedOptions.map(({ id }) => id) }))
+                }
+                isDisabled={formData.universal}
+                isMulti
+                isClearable
+                placeholder="Select products to display this widget"
+              />
               <label>
                 <input
                   type="checkbox"
@@ -383,29 +399,6 @@ const WidgetFormModal = ({
                 All products
               </label>
             </fieldset>
-
-            {!formData.universal && (
-              <fieldset>
-                <legend>
-                  <label htmlFor="products">Select products</label>
-                </legend>
-                <select
-                  id="products"
-                  multiple
-                  value={formData.link_ids}
-                  onChange={(e) => {
-                    const selectedIds = Array.from(e.target.selectedOptions, (option) => option.value);
-                    setFormData((prev) => ({ ...prev, link_ids: selectedIds }));
-                  }}
-                >
-                  {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
-              </fieldset>
-            )}
 
             <fieldset>
               <legend>
