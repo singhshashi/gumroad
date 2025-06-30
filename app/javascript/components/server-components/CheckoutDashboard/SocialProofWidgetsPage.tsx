@@ -18,6 +18,36 @@ import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
 
 import placeholder from "$assets/images/placeholders/social_widgets.png";
 
+type VariableInsertionButtonsProps = {
+  onInsertVariable: (variable: string) => void;
+};
+
+const VariableInsertionButtons: React.FC<VariableInsertionButtonsProps> = ({ onInsertVariable }) => {
+  const variables = [
+    { key: "country", label: "Country", variable: "{{country}}" },
+    { key: "customer_name", label: "Customer", variable: "{{customer_name}}" },
+    { key: "price", label: "Price", variable: "{{price}}" },
+    { key: "product_name", label: "Product", variable: "{{product_name}}" },
+    { key: "total_sales", label: "Total sales", variable: "{{total_sales}}" },
+    { key: "recent_sale_time", label: "Recent sale", variable: "{{recent_sale_time}}" },
+  ];
+
+  return (
+    <div style={{ display: "flex", gap: "var(--spacer-2)", marginTop: "var(--spacer-2)", flexWrap: "wrap" }}>
+      {variables.map((item) => (
+        <Button
+          key={item.key}
+          small
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => onInsertVariable(item.variable)}
+        >
+          {item.label}
+        </Button>
+      ))}
+    </div>
+  );
+};
+
 type Product = {
   id: string;
   name: string;
@@ -318,7 +348,17 @@ const WidgetFormModal = ({
     link_ids: widget?.products?.map((p) => p.id) || [],
   });
 
+  const [focusedField, setFocusedField] = React.useState<'title' | 'description' | 'cta_text' | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleInsertVariable = (variable: string) => {
+    if (!focusedField) return;
+    
+    setFormData((prev) => ({
+      ...prev,
+      [focusedField]: prev[focusedField] + variable,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -419,35 +459,14 @@ const WidgetFormModal = ({
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                onFocus={() => setFocusedField('title')}
+                onBlur={() => setFocusedField(null)}
                 placeholder="Join {{sales_count}} members today!"
                 maxLength={500}
               />
-              <div style={{ display: "flex", gap: "var(--spacer-2)", marginTop: "var(--spacer-2)", flexWrap: "wrap" }}>
-                <button type="button" className="pill small" onClick={() => {
-                  const newValue = formData.title + "{{country}}";
-                  setFormData((prev) => ({ ...prev, title: newValue }));
-                }}>Country</button>
-                <button type="button" className="pill small" onClick={() => {
-                  const newValue = formData.title + "{{customer_name}}";
-                  setFormData((prev) => ({ ...prev, title: newValue }));
-                }}>Customer</button>
-                <button type="button" className="pill small" onClick={() => {
-                  const newValue = formData.title + "{{price}}";
-                  setFormData((prev) => ({ ...prev, title: newValue }));
-                }}>Price</button>
-                <button type="button" className="pill small" onClick={() => {
-                  const newValue = formData.title + "{{product_name}}";
-                  setFormData((prev) => ({ ...prev, title: newValue }));
-                }}>Product</button>
-                <button type="button" className="pill small" onClick={() => {
-                  const newValue = formData.title + "{{total_sales}}";
-                  setFormData((prev) => ({ ...prev, title: newValue }));
-                }}>Total sales</button>
-                <button type="button" className="pill small" onClick={() => {
-                  const newValue = formData.title + "{{recent_sale_time}}";
-                  setFormData((prev) => ({ ...prev, title: newValue }));
-                }}>Recent sale</button>
-              </div>
+              {focusedField === 'title' && (
+                <VariableInsertionButtons onInsertVariable={handleInsertVariable} />
+              )}
             </fieldset>
 
             <fieldset>
@@ -458,10 +477,15 @@ const WidgetFormModal = ({
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                onFocus={() => setFocusedField('description')}
+                onBlur={() => setFocusedField(null)}
                 placeholder="Get lifetime access to the {{product_name}} and start your entrepreneurial journey now."
                 maxLength={1000}
                 rows={3}
               />
+              {focusedField === 'description' && (
+                <VariableInsertionButtons onInsertVariable={handleInsertVariable} />
+              )}
             </fieldset>
 
             <fieldset>
@@ -473,9 +497,14 @@ const WidgetFormModal = ({
                 type="text"
                 value={formData.cta_text}
                 onChange={(e) => setFormData((prev) => ({ ...prev, cta_text: e.target.value }))}
+                onFocus={() => setFocusedField('cta_text')}
+                onBlur={() => setFocusedField(null)}
                 placeholder="Purchase Now - {{price}}"
                 maxLength={255}
               />
+              {focusedField === 'cta_text' && (
+                <VariableInsertionButtons onInsertVariable={handleInsertVariable} />
+              )}
             </fieldset>
 
             <fieldset>
