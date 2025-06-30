@@ -344,14 +344,17 @@ const WidgetFormModal = ({
   return (
     <div className="fixed-aside" style={{ display: "contents" }}>
       <header className="sticky-top">
-        <h1>{view === "edit" ? "Edit Widget" : "Create Widget"}</h1>
+        <h1>{view === "edit" ? "Edit widget" : "Create widget"}</h1>
         <div className="actions">
           <Button onClick={onClose} disabled={isSubmitting}>
             <Icon name="x-square" />
             Cancel
           </Button>
-          <Button type="submit" color="accent" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : view === "edit" ? "Update" : "Create"}
+          <Button color="primary" onClick={handleSubmit} disabled={isSubmitting}>
+            Save
+          </Button>
+          <Button color="accent" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Publishing..." : "Publish"}
           </Button>
         </div>
       </header>
@@ -399,6 +402,13 @@ const WidgetFormModal = ({
                 All products
               </label>
             </fieldset>
+          </section>
+
+          <section>
+            <header>
+              <h3>Message</h3>
+              <p>Click on the buttons below to quickly add them to your title, description, or call to action. This will dynamically update your widget.</p>
+            </header>
 
             <fieldset>
               <legend>
@@ -409,9 +419,35 @@ const WidgetFormModal = ({
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                placeholder="Join [total_sales] members today!"
+                placeholder="Join {{sales_count}} members today!"
                 maxLength={500}
               />
+              <div style={{ display: "flex", gap: "var(--spacer-2)", marginTop: "var(--spacer-2)", flexWrap: "wrap" }}>
+                <button type="button" className="pill small" onClick={() => {
+                  const newValue = formData.title + "{{sales_count}}";
+                  setFormData((prev) => ({ ...prev, title: newValue }));
+                }}>Sales count</button>
+                <button type="button" className="pill small" onClick={() => {
+                  const newValue = formData.title + "{{customer_name}}";
+                  setFormData((prev) => ({ ...prev, title: newValue }));
+                }}>Customer</button>
+                <button type="button" className="pill small" onClick={() => {
+                  const newValue = formData.title + "{{price}}";
+                  setFormData((prev) => ({ ...prev, title: newValue }));
+                }}>Price</button>
+                <button type="button" className="pill small" onClick={() => {
+                  const newValue = formData.title + "{{product_name}}";
+                  setFormData((prev) => ({ ...prev, title: newValue }));
+                }}>Product</button>
+                <button type="button" className="pill small" onClick={() => {
+                  const newValue = formData.title + "{{country}}";
+                  setFormData((prev) => ({ ...prev, title: newValue }));
+                }}>Country</button>
+                <button type="button" className="pill small" onClick={() => {
+                  const newValue = formData.title + "{{recent_sale_time}}";
+                  setFormData((prev) => ({ ...prev, title: newValue }));
+                }}>Recent sale</button>
+              </div>
             </fieldset>
 
             <fieldset>
@@ -422,7 +458,7 @@ const WidgetFormModal = ({
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Get lifetime access and start your journey now."
+                placeholder="Get lifetime access to the {{product_name}} and start your entrepreneurial journey now."
                 maxLength={1000}
                 rows={3}
               />
@@ -437,7 +473,7 @@ const WidgetFormModal = ({
                 type="text"
                 value={formData.cta_text}
                 onChange={(e) => setFormData((prev) => ({ ...prev, cta_text: e.target.value }))}
-                placeholder="Purchase Now - [price]"
+                placeholder="Purchase Now - {{price}}"
                 maxLength={255}
               />
             </fieldset>
@@ -453,6 +489,12 @@ const WidgetFormModal = ({
                 onChange={(value) => setFormData((prev) => ({ ...prev, cta_type: value }))}
               />
             </fieldset>
+          </section>
+
+          <section>
+            <header>
+              <h3>Image</h3>
+            </header>
 
             <fieldset>
               <legend>
@@ -481,7 +523,9 @@ const WidgetFormModal = ({
                 />
               </fieldset>
             )}
+          </section>
 
+          <section>
             <fieldset>
               <legend>Settings</legend>
               <label>
