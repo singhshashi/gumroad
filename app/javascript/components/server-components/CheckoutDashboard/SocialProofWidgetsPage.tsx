@@ -424,9 +424,9 @@ const WidgetFormModal = ({
               />
               <div style={{ display: "flex", gap: "var(--spacer-2)", marginTop: "var(--spacer-2)", flexWrap: "wrap" }}>
                 <button type="button" className="pill small" onClick={() => {
-                  const newValue = formData.title + "{{sales_count}}";
+                  const newValue = formData.title + "{{country}}";
                   setFormData((prev) => ({ ...prev, title: newValue }));
-                }}>Sales count</button>
+                }}>Country</button>
                 <button type="button" className="pill small" onClick={() => {
                   const newValue = formData.title + "{{customer_name}}";
                   setFormData((prev) => ({ ...prev, title: newValue }));
@@ -440,9 +440,9 @@ const WidgetFormModal = ({
                   setFormData((prev) => ({ ...prev, title: newValue }));
                 }}>Product</button>
                 <button type="button" className="pill small" onClick={() => {
-                  const newValue = formData.title + "{{country}}";
+                  const newValue = formData.title + "{{total_sales}}";
                   setFormData((prev) => ({ ...prev, title: newValue }));
-                }}>Country</button>
+                }}>Total sales</button>
                 <button type="button" className="pill small" onClick={() => {
                   const newValue = formData.title + "{{recent_sale_time}}";
                   setFormData((prev) => ({ ...prev, title: newValue }));
