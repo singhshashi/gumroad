@@ -125,6 +125,55 @@ class SocialProofWidget < ApplicationRecord
     product_specific_widgets.presence || universal_widgets.limit(1)
   end
   
+  def template_context_for_product(product)
+    # Get recent successful purchases for social proof data
+    recent_purchases = product.sales
+                             .where(state: Purchase::ALL_SUCCESS_STATES)
+                             .where(created_at: 48.hours.ago..)
+                             .order(created_at: :desc)
+                             .limit(10)
+    
+    recent_purchase = recent_purchases.first
+    
+    # Product-specific data
+    context = {
+      product_name: product.name,
+      price: Money.new(product.cached_default_price_cents, product.price_currency_type || 'USD').format,
+      total_sales: product.successful_sales_count.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
+    }
+    
+    # Recent purchase data for social proof
+    if recent_purchase
+      # Anonymize customer name (first name + initial)
+      customer_name = if recent_purchase.full_name.present?
+        name_parts = recent_purchase.full_name.split(' ')
+        first_name = name_parts.first
+        if name_parts.length > 1
+          "#{first_name} #{name_parts.last[0]}."
+        else
+          first_name
+        end
+      else
+        "Someone"
+      end
+      
+      context.merge!({
+        country: recent_purchase.country || "Unknown",
+        customer_name: customer_name,
+        recent_sale_time: ActionController::Base.helpers.time_ago_in_words(recent_purchase.created_at) + " ago"
+      })
+    else
+      # Fallback when no recent purchases
+      context.merge!({
+        country: "Unknown",
+        customer_name: "Someone",
+        recent_sale_time: "recently"
+      })
+    end
+    
+    context
+  end
+  
   def increment_impression!
     analytics_data = self.analytics_data || {}
     analytics_data['impressions'] = (analytics_data['impressions'] || 0) + 1

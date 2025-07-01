@@ -381,6 +381,31 @@ const WidgetFormModal = ({
     }
   };
 
+  const processPreviewTemplate = (template: string) => {
+    if (!template) return template;
+    
+    // Use data from the first available product, or fallback to sample data
+    const firstProduct = products[0];
+    
+    // Generate realistic template context similar to backend method
+    const templateContext = {
+      product_name: firstProduct?.name || "Digital Marketing Course",
+      price: "$29", // Would come from product.cached_default_price_cents formatted
+      total_sales: firstProduct?.sales_count?.toLocaleString() || "1,247",
+      country: "United States",
+      customer_name: "Sarah M.", // Would be anonymized as "FirstName L." from recent purchase
+      recent_sale_time: "2 hours ago" // Would be time_ago_in_words from recent purchase
+    };
+    
+    let result = template;
+    Object.entries(templateContext).forEach(([key, value]) => {
+      const placeholder = `{{${key}}}`;
+      result = result.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value);
+    });
+    
+    return result;
+  };
+
   return (
     <div className="fixed-aside" style={{ display: "contents" }}>
       <header className="sticky-top">
@@ -580,8 +605,8 @@ const WidgetFormModal = ({
             marginTop: "var(--spacer-4)",
             minHeight: "200px"
           }}>
-            {formData.title && <h4 style={{ margin: "0 0 var(--spacer-2) 0" }}>{formData.title}</h4>}
-            {formData.description && <p style={{ margin: "0 0 var(--spacer-3) 0", color: "var(--text-muted)" }}>{formData.description}</p>}
+            {formData.title && <h4 style={{ margin: "0 0 var(--spacer-2) 0" }}>{processPreviewTemplate(formData.title)}</h4>}
+            {formData.description && <p style={{ margin: "0 0 var(--spacer-3) 0", color: "var(--text-muted)" }}>{processPreviewTemplate(formData.description)}</p>}
             {formData.cta_text && formData.cta_type !== "none" && (
               <div style={{
                 marginTop: "var(--spacer-3)",
@@ -595,7 +620,7 @@ const WidgetFormModal = ({
                 cursor: "pointer",
                 fontSize: "0.875rem"
               }}>
-                {formData.cta_text}
+                {processPreviewTemplate(formData.cta_text)}
               </div>
             )}
             {!formData.title && !formData.description && !formData.cta_text && (
