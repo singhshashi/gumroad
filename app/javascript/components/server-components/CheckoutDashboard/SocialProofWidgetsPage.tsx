@@ -594,38 +594,46 @@ const WidgetFormModal = ({
           </section>
         </form>
       </main>
-      <aside>
-        <div style={{ padding: "var(--spacer-4)", position: "sticky", top: "var(--spacer-4)" }}>
+      <aside aria-label="Preview">
+        <header>
           <h2>Preview</h2>
-          <div className="social-proof-widget-preview">
-            {formData.title && <h4 style={{ margin: "0 0 var(--spacer-2) 0" }}>{processPreviewTemplate(formData.title)}</h4>}
-            {formData.description && <p style={{ margin: "0 0 var(--spacer-3) 0", color: "var(--text-muted)" }}>{processPreviewTemplate(formData.description)}</p>}
-            {formData.cta_text && formData.cta_type !== "none" && (
-              <div style={{ marginTop: "var(--spacer-3, 12px)" }}>
-                {formData.cta_type === "button" ? (
-                  <Button color="success" small style={{ width: "100%" }}>
-                    {processPreviewTemplate(formData.cta_text)}
-                  </Button>
-                ) : (
-                  <button 
-                    style={{ 
-                      background: "none", 
-                      border: "none", 
-                      color: "var(--accent, #0066cc)", 
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      fontSize: "0.875rem"
-                    }}
-                  >
-                    {processPreviewTemplate(formData.cta_text)}
-                  </button>
-                )}
-              </div>
-            )}
-            {!formData.title && !formData.description && !formData.cta_text && (
-              <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Your widget preview will appear here</p>
-            )}
-          </div>
+        </header>
+        <div 
+          style={{
+            border: "var(--border)",
+            backgroundColor: "rgb(var(--filled))",
+            borderRadius: "var(--border-radius-2)",
+            padding: "var(--spacer-4)",
+            margin: "var(--spacer-4)"
+          }}
+        >
+          {formData.title && <h4 style={{ margin: "0 0 var(--spacer-2) 0", fontWeight: "bold" }}>{processPreviewTemplate(formData.title)}</h4>}
+          {formData.description && <p style={{ margin: "0 0 var(--spacer-3) 0", color: "var(--text-muted)" }}>{processPreviewTemplate(formData.description)}</p>}
+          {formData.cta_text && formData.cta_type !== "none" && (
+            <div style={{ marginTop: "var(--spacer-3, 12px)" }}>
+              {formData.cta_type === "button" ? (
+                <Button color="success" small style={{ width: "90%" }}>
+                  {processPreviewTemplate(formData.cta_text)}
+                </Button>
+              ) : (
+                <button 
+                  style={{ 
+                    background: "none", 
+                    border: "none", 
+                    color: "var(--accent, #0066cc)", 
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontSize: "0.875rem"
+                  }}
+                >
+                  {processPreviewTemplate(formData.cta_text)}
+                </button>
+              )}
+            </div>
+          )}
+          {!formData.title && !formData.description && !formData.cta_text && (
+            <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Your widget preview will appear here</p>
+          )}
         </div>
       </aside>
     </div>
