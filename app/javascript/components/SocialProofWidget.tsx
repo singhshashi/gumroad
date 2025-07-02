@@ -20,39 +20,52 @@ type SocialProofWidgetData = {
 
 type SocialProofWidgetProps = {
   widget: SocialProofWidgetData;
-  productData?: {
-    name: string;
-    price: string;
-    sales_count: number;
-    country: string;
-    customer_name?: string;
-    recent_sale_time?: string;
-  } | undefined;
+  productData?:
+    | {
+        name: string;
+        price: string;
+        sales_count: number;
+        country: string;
+        customer_name?: string;
+        recent_sale_time?: string;
+      }
+    | undefined;
   onAction?: (() => void) | undefined;
   className?: string;
+  disableAnalytics?: boolean;
 };
 
-export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({ widget, productData, onAction, className }) => {
+export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
+  widget,
+  productData,
+  onAction,
+  className,
+  disableAnalytics = false,
+}) => {
   const [isVisible, setIsVisible] = React.useState(true);
   const [hasAnimated, setHasAnimated] = React.useState(false);
   const widgetRef = React.useRef<HTMLDivElement>(null);
 
   // Track analytics
   React.useEffect(() => {
-    if (isVisible && !hasAnimated) {
+    if (isVisible && !hasAnimated && !disableAnalytics) {
       setHasAnimated(true);
       // Track impression
       trackWidgetImpression(widget.id);
     }
-  }, [isVisible, hasAnimated, widget.id]);
+  }, [isVisible, hasAnimated, widget.id, disableAnalytics]);
 
   const handleClose = () => {
-    trackWidgetClose(widget.id);
+    if (!disableAnalytics) {
+      trackWidgetClose(widget.id);
+    }
     setIsVisible(false);
   };
 
   const handleAction = () => {
-    trackWidgetClick(widget.id);
+    if (!disableAnalytics) {
+      trackWidgetClick(widget.id);
+    }
     onAction?.();
   };
 
@@ -63,6 +76,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({ widget, pr
       product_name: productData.name,
       price: productData.price,
       sales_count: productData.sales_count.toString(),
+      total_sales: productData.sales_count.toString(),
       country: productData.country,
       customer_name: productData.customer_name || "Someone",
       recent_sale_time: productData.recent_sale_time || "recently",
@@ -74,7 +88,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({ widget, pr
       let result = template;
       Object.entries(context).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
-        result = result.replace(new RegExp(placeholder, "gu"), value);
+        result = result.replace(new RegExp(placeholder.replace(/[{}]/g, "\\$&"), "g"), value);
       });
       return result;
     };
@@ -107,24 +121,23 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({ widget, pr
 
     if (widget.cta_type === "button") {
       return (
-        <Button onClick={handleAction} color="primary" small className="widget-cta-button">
+        <Button onClick={handleAction} color="success" small className="widget-cta-button">
           {processedContent.cta_text}
         </Button>
       );
     }
 
-    if (widget.cta_type === "link") {
-      return (
-        <button onClick={handleAction} className="widget-cta-link">
-          {processedContent.cta_text}
-        </button>
-      );
-    }
-
-    return null;
+    // widget.cta_type === "link"
+    return (
+      <button onClick={handleAction} className="widget-cta-link">
+        {processedContent.cta_text}
+      </button>
+    );
   };
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <div

@@ -11,9 +11,11 @@ import { Layout, Page } from "$app/components/CheckoutDashboard/Layout";
 import { Icon } from "$app/components/Icons";
 import { Pagination, PaginationProps } from "$app/components/Pagination";
 import { Popover } from "$app/components/Popover";
-import { showAlert } from "$app/components/server-components/Alert";
-import { Toggle } from "$app/components/Toggle";
+import { Preview } from "$app/components/Preview";
 import { Select } from "$app/components/Select";
+import { showAlert } from "$app/components/server-components/Alert";
+import { SocialProofWidget } from "$app/components/SocialProofWidget";
+import { Toggle } from "$app/components/Toggle";
 import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
 
 import placeholder from "$assets/images/placeholders/social_widgets.png";
@@ -100,219 +102,236 @@ type SocialProofWidgetsPageProps = {
   pages: Page[];
 };
 
-const SocialProofWidgetsPage = ({ widgets, products, image_type_options, cta_type_options, pagination, pages }: SocialProofWidgetsPageProps) => {
-    const [widgetsList, setWidgetsList] = React.useState(widgets);
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [searchTerm, setSearchTerm] = React.useState("");
-    const [isSearchPopoverOpen, setIsSearchPopoverOpen] = React.useState(false);
-    const [view, setView] = React.useState<"list" | "create" | "edit">("list");
-    const [editingWidget, setEditingWidget] = React.useState<SocialProofWidget | null>(null);
-    const searchInputRef = React.useRef<HTMLInputElement>(null);
+const SocialProofWidgetsPage = ({
+  widgets,
+  products,
+  image_type_options,
+  cta_type_options,
+  pagination,
+  pages,
+}: SocialProofWidgetsPageProps) => {
+  const [widgetsList, setWidgetsList] = React.useState(widgets);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [isSearchPopoverOpen, setIsSearchPopoverOpen] = React.useState(false);
+  const [view, setView] = React.useState<"list" | "create" | "edit">("list");
+  const [editingWidget, setEditingWidget] = React.useState<SocialProofWidget | null>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
-    const refreshWidgets = async () => {
+  const refreshWidgets = () => {
+    try {
+      setIsLoading(true);
+      // TODO: Implement API call to refresh widgets
+      // const response = await getPagedSocialProofWidgets({ search: searchTerm });
+      // setWidgetsList(response.widgets);
+    } catch (error) {
+      if (!(error instanceof AbortError)) {
+        showAlert("Failed to load widgets", "error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateWidget = () => {
+    setEditingWidget(null);
+    setView("create");
+  };
+
+  const handleEditWidget = (widget: SocialProofWidget) => {
+    setEditingWidget(widget);
+    setView("edit");
+  };
+
+  const handleDeleteWidget = (widget: SocialProofWidget) => {
+    if (!widget.can_destroy) return;
+
+    // eslint-disable-next-line no-alert
+    if (confirm(`Are you sure you want to delete "${widget.name}"?`)) {
       try {
-        setIsLoading(true);
-        // TODO: Implement API call to refresh widgets
-        // const response = await getPagedSocialProofWidgets({ search: searchTerm });
-        // setWidgetsList(response.widgets);
-      } catch (error) {
-        if (!(error instanceof AbortError)) {
-          showAlert("Failed to load widgets", "error");
-        }
-      } finally {
-        setIsLoading(false);
+        // TODO: Implement delete API call
+        // await deleteSocialProofWidget(widget.id);
+        setWidgetsList((prev) => prev.filter((w) => w.id !== widget.id));
+        showAlert("Widget deleted successfully", "success");
+      } catch (_error) {
+        showAlert("Failed to delete widget", "error");
       }
-    };
+    }
+  };
 
-    const handleCreateWidget = () => {
-      setEditingWidget(null);
-      setView("create");
-    };
-
-    const handleEditWidget = (widget: SocialProofWidget) => {
-      setEditingWidget(widget);
-      setView("edit");
-    };
-
-    const handleDeleteWidget = async (widget: SocialProofWidget) => {
-      if (!widget.can_destroy) return;
-
-      if (confirm(`Are you sure you want to delete "${widget.name}"?`)) {
-        try {
-          // TODO: Implement delete API call
-          // await deleteSocialProofWidget(widget.id);
-          setWidgetsList((prev) => prev.filter((w) => w.id !== widget.id));
-          showAlert("Widget deleted successfully", "success");
-        } catch (_error) {
-          showAlert("Failed to delete widget", "error");
-        }
-      }
-    };
-
-
-    return view === "list" ? (
-      <Layout
-        currentPage="social_proof_widgets"
-        pages={pages}
-        actions={
-          <>
-            <Popover
-              open={isSearchPopoverOpen}
-              onToggle={setIsSearchPopoverOpen}
-              aria-label="Search"
-              trigger={
-                <div className="button">
-                  <Icon name="solid-search" />
-                </div>
-              }
-            >
-              <div className="input">
+  return view === "list" ? (
+    <Layout
+      currentPage="social_proof_widgets"
+      pages={pages}
+      actions={
+        <>
+          <Popover
+            open={isSearchPopoverOpen}
+            onToggle={setIsSearchPopoverOpen}
+            aria-label="Search"
+            trigger={
+              <div className="button">
                 <Icon name="solid-search" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search"
-                  value={searchTerm ?? ""}
-                  onChange={(evt) => {
-                    setSearchTerm(evt.target.value);
-                  }}
-                  onKeyDown={(evt) => {
-                    if (evt.key === "Enter") {
-                      // @ts-ignore - writeQueryParams type signature issue
-                      writeQueryParams({ search: searchTerm || undefined });
-                      refreshWidgets();
-                      setIsSearchPopoverOpen(false);
-                    }
-                  }}
-                />
               </div>
-            </Popover>
-            <Button onClick={handleCreateWidget} color="accent">
-              New widget
-            </Button>
-          </>
-        }
-      >
-        <div className="container">
-          <div className="row">
-            <div className="col-12">
-              {widgetsList.length === 0 && !isLoading ? (
-                <div className="placeholder">
-                  <figure>
-                    <img src={placeholder} />
-                  </figure>
-                  <div>
-                    <h2>Use social proof to build trust and boost conversions</h2>
-                    <p>
-                      Let your product page do the talking. Show off what's happening and get more people clicking.
-                    </p>
-                    <Button onClick={handleCreateWidget} color="accent">
-                      New widget
-                    </Button>
-                    <p>
-                      <a href="#" data-helper-prompt="How can I use social proof widgets to boost conversions?">Learn more about social proof</a>
-                    </p>
-                  </div>
+            }
+          >
+            <div className="input">
+              <Icon name="solid-search" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search"
+                value={searchTerm || ""}
+                onChange={(evt) => {
+                  setSearchTerm(evt.target.value);
+                }}
+                onKeyDown={(evt) => {
+                  if (evt.key === "Enter") {
+                    // @ts-expect-error - writeQueryParams type signature issue
+                    writeQueryParams({ search: searchTerm || undefined });
+                    // Note: refreshWidgets is synchronous now, no need for void
+                    refreshWidgets();
+                    setIsSearchPopoverOpen(false);
+                  }
+                }}
+              />
+            </div>
+          </Popover>
+          <Button onClick={handleCreateWidget} color="accent">
+            New widget
+          </Button>
+        </>
+      }
+    >
+      <div className="container">
+        <div className="row">
+          <div className="col-12">
+            {widgetsList.length === 0 && !isLoading ? (
+              <div className="placeholder">
+                <figure>
+                  <img src={placeholder} />
+                </figure>
+                <div>
+                  <h2>Use social proof to build trust and boost conversions</h2>
+                  <p>Let your product page do the talking. Show off what's happening and get more people clicking.</p>
+                  <Button onClick={handleCreateWidget} color="accent">
+                    New widget
+                  </Button>
+                  <p>
+                    <a href="#" data-helper-prompt="How can I use social proof widgets to boost conversions?">
+                      Learn more about social proof
+                    </a>
+                  </p>
                 </div>
-              ) : (
-                <>
-                  <div className="widgets-grid">
-                    {widgetsList.map((widget) => (
-                      <div key={widget.id} className="widget-card">
-                        <div className="widget-header">
-                          <h4>{widget.name}</h4>
-                          <div className="widget-actions">
-                            {widget.can_update ? (
-                              <button onClick={() => handleEditWidget(widget)} className="btn-icon" title="Edit widget">
-                                <Icon name="solid-send" />
-                              </button>
-                            ) : null}
-                            {widget.can_destroy ? (
-                              <button
-                                onClick={() => handleDeleteWidget(widget)}
-                                className="btn-icon btn-danger"
-                                title="Delete widget"
-                              >
-                                <Icon name="trash2" />
-                              </button>
-                            ) : null}
+              </div>
+            ) : (
+              <>
+                <div className="widgets-grid">
+                  {widgetsList.map((widget) => (
+                    <div key={widget.id} className="widget-card">
+                      <div className="widget-header">
+                        <h4>{widget.name}</h4>
+                        <div className="widget-actions">
+                          {widget.can_update ? (
+                            <button
+                              onClick={() => {
+                                handleEditWidget(widget);
+                              }}
+                              className="btn-icon"
+                              title="Edit widget"
+                            >
+                              <Icon name="solid-send" />
+                            </button>
+                          ) : null}
+                          {widget.can_destroy ? (
+                            <button
+                              onClick={() => {
+                                // Note: handleDeleteWidget is synchronous now, no need for void
+                                handleDeleteWidget(widget);
+                              }}
+                              className="btn-icon btn-danger"
+                              title="Delete widget"
+                            >
+                              <Icon name="trash2" />
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="widget-content">
+                        <div className="widget-preview">
+                          {widget.icon_class ? <i className={widget.icon_class} /> : null}
+                          {widget.title ? <h5>{widget.title}</h5> : null}
+                          {widget.description ? <p>{widget.description}</p> : null}
+                          {widget.cta_text && widget.cta_type !== "none" ? (
+                            <div className={cx("cta", `cta-${widget.cta_type}`)}>{widget.cta_text}</div>
+                          ) : null}
+                        </div>
+
+                        <div className="widget-meta">
+                          <div className="widget-scope">
+                            {widget.universal ? (
+                              <span className="scope-badge universal">Universal</span>
+                            ) : (
+                              <span className="scope-badge specific">{widget.products?.length || 0} products</span>
+                            )}
+                          </div>
+
+                          <div className="widget-status">
+                            <Toggle
+                              value={widget.enabled}
+                              onChange={() => {
+                                /* TODO: Implement enable/disable */
+                              }}
+                              disabled={!widget.can_update}
+                            />
                           </div>
                         </div>
 
-                        <div className="widget-content">
-                          <div className="widget-preview">
-                            {widget.icon_class ? <i className={widget.icon_class} /> : null}
-                            {widget.title ? <h5>{widget.title}</h5> : null}
-                            {widget.description ? <p>{widget.description}</p> : null}
-                            {widget.cta_text && widget.cta_type !== "none" ? (
-                              <div className={cx("cta", `cta-${widget.cta_type}`)}>{widget.cta_text}</div>
-                            ) : null}
+                        <div className="widget-analytics">
+                          <div className="analytics-stat">
+                            <span className="stat-value">{widget.analytics.impressions}</span>
+                            <span className="stat-label">Impressions</span>
                           </div>
-
-                          <div className="widget-meta">
-                            <div className="widget-scope">
-                              {widget.universal ? (
-                                <span className="scope-badge universal">Universal</span>
-                              ) : (
-                                <span className="scope-badge specific">{widget.products?.length || 0} products</span>
-                              )}
-                            </div>
-
-                            <div className="widget-status">
-                              <Toggle
-                                value={widget.enabled}
-                                onChange={() => {
-                                  /* TODO: Implement enable/disable */
-                                }}
-                                disabled={!widget.can_update}
-                              />
-                            </div>
+                          <div className="analytics-stat">
+                            <span className="stat-value">{widget.analytics.clicks}</span>
+                            <span className="stat-label">Clicks</span>
                           </div>
-
-                          <div className="widget-analytics">
-                            <div className="analytics-stat">
-                              <span className="stat-value">{widget.analytics.impressions}</span>
-                              <span className="stat-label">Impressions</span>
-                            </div>
-                            <div className="analytics-stat">
-                              <span className="stat-value">{widget.analytics.clicks}</span>
-                              <span className="stat-label">Clicks</span>
-                            </div>
-                            <div className="analytics-stat">
-                              <span className="stat-value">{widget.analytics.conversion_rate}%</span>
-                              <span className="stat-label">CVR</span>
-                            </div>
+                          <div className="analytics-stat">
+                            <span className="stat-value">{widget.analytics.conversion_rate}%</span>
+                            <span className="stat-label">CVR</span>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
+                </div>
 
-                  {pagination ? <Pagination pagination={pagination} onChangePage={() => {}} /> : null}
-                </>
-              )}
-            </div>
+                {pagination ? <Pagination pagination={pagination} onChangePage={() => {}} /> : null}
+              </>
+            )}
           </div>
         </div>
-      </Layout>
-    ) : (
-      <WidgetFormModal
-        widget={editingWidget}
-        products={products}
-        imageTypeOptions={image_type_options}
-        ctaTypeOptions={cta_type_options}
-        view={view}
-        onClose={() => setView("list")}
-        onSave={(widget) => {
-          if (editingWidget) {
-            setWidgetsList((prev) => prev.map((w) => (w.id === widget.id ? widget : w)));
-          } else {
-            setWidgetsList((prev) => [widget, ...prev]);
-          }
-          setView("list");
-        }}
-      />
-    );
+      </div>
+    </Layout>
+  ) : (
+    <WidgetFormModal
+      widget={editingWidget}
+      products={products}
+      imageTypeOptions={image_type_options}
+      ctaTypeOptions={cta_type_options}
+      view={view}
+      onClose={() => setView("list")}
+      onSave={(widget) => {
+        if (editingWidget) {
+          setWidgetsList((prev) => prev.map((w) => (w.id === widget.id ? widget : w)));
+        } else {
+          setWidgetsList((prev) => [widget, ...prev]);
+        }
+        setView("list");
+      }}
+    />
+  );
 };
 
 // Widget Form Modal Component
@@ -348,19 +367,19 @@ const WidgetFormModal = ({
     link_ids: widget?.products?.map((p) => p.id) || [],
   });
 
-  const [focusedField, setFocusedField] = React.useState<'title' | 'description' | 'cta_text' | null>(null);
+  const [focusedField, setFocusedField] = React.useState<"title" | "description" | "cta_text" | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleInsertVariable = (variable: string) => {
     if (!focusedField) return;
-    
+
     setFormData((prev) => ({
       ...prev,
-      [focusedField]: prev[focusedField] + variable,
+      [focusedField]: prev[focusedField] + variable + " ",
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -381,29 +400,63 @@ const WidgetFormModal = ({
     }
   };
 
-  const processPreviewTemplate = (template: string) => {
-    if (!template) return template;
-    
+  const getPreviewProductData = () => {
     // Use data from the first available product, or fallback to sample data
     const firstProduct = products[0];
-    
-    // Generate realistic template context similar to backend method
-    const templateContext = {
-      product_name: firstProduct?.name || "Digital Marketing Course",
+
+    return {
+      name: firstProduct?.name || "Digital Marketing Course",
       price: "$29", // Would come from product.cached_default_price_cents formatted
-      total_sales: firstProduct?.sales_count?.toLocaleString() || "1,247",
+      sales_count: firstProduct?.sales_count || 1247,
       country: "United States",
       customer_name: "Sarah M.", // Would be anonymized as "FirstName L." from recent purchase
-      recent_sale_time: "2 hours ago" // Would be time_ago_in_words from recent purchase
+      recent_sale_time: "2 hours ago", // Would be time_ago_in_words from recent purchase
     };
-    
-    let result = template;
-    Object.entries(templateContext).forEach(([key, value]) => {
-      const placeholder = `{{${key}}}`;
-      result = result.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value);
-    });
-    
-    return result;
+  };
+
+  const getPreviewWidgetData = () => {
+    // Get the image type and related data
+    const imageType = formData.image_type;
+    let customImageUrl = formData.custom_image_url;
+    let iconClass = "";
+    let productThumbnailUrl = "";
+
+    // Handle different image types
+    if (imageType === "custom_image") {
+      // Use custom image URL if provided, otherwise fallback to placeholder
+      customImageUrl ||= "https://via.placeholder.com/48x48/ff6b6b/ffffff?text=📈";
+    } else if (imageType === "product_thumbnail") {
+      // Use first product's thumbnail or a placeholder
+      const firstProduct = products[0];
+      productThumbnailUrl = firstProduct?.thumbnail_url || "https://via.placeholder.com/48x48/4ecdc4/ffffff?text=📦";
+    } else {
+      // Handle icon types
+      const iconMap: Record<string, string> = {
+        icon_solid_fire: "fa fa-fire",
+        icon_solid_heart: "fa fa-heart",
+        icon_patch_check_fill: "fa fa-check-circle",
+        icon_cart3_fill: "fa fa-shopping-cart",
+        icon_solid_users: "fa fa-users",
+        icon_star_fill: "fa fa-star",
+        icon_solid_sparkles: "fa fa-sparkles",
+        icon_clock_fill: "fa fa-clock",
+        icon_solid_gift: "fa fa-gift",
+        icon_solid_lightning_bolt: "fa fa-bolt",
+      };
+      iconClass = iconMap[imageType] || "fa fa-fire";
+    }
+
+    return {
+      id: "preview-widget",
+      title: formData.title,
+      description: formData.description,
+      cta_text: formData.cta_text,
+      cta_type: formData.cta_type,
+      image_type: imageType,
+      custom_image_url: customImageUrl,
+      icon_class: iconClass,
+      product_thumbnail_url: productThumbnailUrl,
+    };
   };
 
   return (
@@ -415,16 +468,32 @@ const WidgetFormModal = ({
             <Icon name="x-square" />
             Cancel
           </Button>
-          <Button color="primary" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button
+            color="primary"
+            onClick={(e) => {
+              handleSubmit(e);
+            }}
+            disabled={isSubmitting}
+          >
             Save
           </Button>
-          <Button color="accent" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button
+            color="accent"
+            onClick={(e) => {
+              handleSubmit(e);
+            }}
+            disabled={isSubmitting}
+          >
             {isSubmitting ? "Publishing..." : "Publish"}
           </Button>
         </div>
       </header>
       <main className="squished">
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={(e) => {
+            handleSubmit(e);
+          }}
+        >
           <section>
             <fieldset>
               <legend>
@@ -449,7 +518,9 @@ const WidgetFormModal = ({
                 inputId="products"
                 instanceId="products"
                 options={products.map(({ id, name: label }) => ({ id, label }))}
-                value={products.filter(({ id }) => formData.link_ids.includes(id)).map(({ id, name }) => ({ id, label: name }))}
+                value={products
+                  .filter(({ id }) => formData.link_ids.includes(id))
+                  .map(({ id, name }) => ({ id, label: name }))}
                 onChange={(selectedOptions) =>
                   setFormData((prev) => ({ ...prev, link_ids: selectedOptions.map(({ id }) => id) }))
                 }
@@ -472,7 +543,10 @@ const WidgetFormModal = ({
           <section>
             <header>
               <h3>Message</h3>
-              <p>Click on the buttons below to quickly add them to your title, description, or call to action. This will dynamically update your widget.</p>
+              <p>
+                Click on the buttons below to quickly add them to your title, description, or call to action. This will
+                dynamically update your widget.
+              </p>
             </header>
 
             <fieldset>
@@ -484,14 +558,12 @@ const WidgetFormModal = ({
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                onFocus={() => setFocusedField('title')}
+                onFocus={() => setFocusedField("title")}
                 onBlur={() => setFocusedField(null)}
                 placeholder="Join {{sales_count}} members today!"
                 maxLength={500}
               />
-              {focusedField === 'title' && (
-                <VariableInsertionButtons onInsertVariable={handleInsertVariable} />
-              )}
+              {focusedField === "title" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
             </fieldset>
 
             <fieldset>
@@ -502,15 +574,13 @@ const WidgetFormModal = ({
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                onFocus={() => setFocusedField('description')}
+                onFocus={() => setFocusedField("description")}
                 onBlur={() => setFocusedField(null)}
                 placeholder="Get lifetime access to the {{product_name}} and start your entrepreneurial journey now."
                 maxLength={1000}
                 rows={3}
               />
-              {focusedField === 'description' && (
-                <VariableInsertionButtons onInsertVariable={handleInsertVariable} />
-              )}
+              {focusedField === "description" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
             </fieldset>
 
             <fieldset>
@@ -522,14 +592,12 @@ const WidgetFormModal = ({
                 type="text"
                 value={formData.cta_text}
                 onChange={(e) => setFormData((prev) => ({ ...prev, cta_text: e.target.value }))}
-                onFocus={() => setFocusedField('cta_text')}
+                onFocus={() => setFocusedField("cta_text")}
                 onBlur={() => setFocusedField(null)}
                 placeholder="Purchase Now - {{price}}"
                 maxLength={255}
               />
-              {focusedField === 'cta_text' && (
-                <VariableInsertionButtons onInsertVariable={handleInsertVariable} />
-              )}
+              {focusedField === "cta_text" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
             </fieldset>
 
             <fieldset>
@@ -578,62 +646,59 @@ const WidgetFormModal = ({
               </fieldset>
             )}
           </section>
-
-          <section>
-            <fieldset>
-              <legend>Settings</legend>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={formData.enabled}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, enabled: e.target.checked }))}
-                />
-                Enabled
-              </label>
-            </fieldset>
-          </section>
         </form>
       </main>
       <aside aria-label="Preview">
         <header>
           <h2>Preview</h2>
         </header>
-        <div 
+        <div
           style={{
             border: "var(--border)",
-            backgroundColor: "rgb(var(--filled))",
             borderRadius: "var(--border-radius-2)",
-            padding: "var(--spacer-4)",
-            margin: "var(--spacer-4)"
+            backgroundColor: "rgb(var(--filled))",
+            margin: "var(--spacer-4)",
+            overflow: "hidden",
           }}
         >
-          {formData.title && <h4 style={{ margin: "0 0 var(--spacer-2) 0", fontWeight: "bold" }}>{processPreviewTemplate(formData.title)}</h4>}
-          {formData.description && <p style={{ margin: "0 0 var(--spacer-3) 0", color: "var(--text-muted)" }}>{processPreviewTemplate(formData.description)}</p>}
-          {formData.cta_text && formData.cta_type !== "none" && (
-            <div style={{ marginTop: "var(--spacer-3, 12px)" }}>
-              {formData.cta_type === "button" ? (
-                <Button color="success" small style={{ width: "90%" }}>
-                  {processPreviewTemplate(formData.cta_text)}
-                </Button>
-              ) : (
-                <button 
-                  style={{ 
-                    background: "none", 
-                    border: "none", 
-                    color: "var(--accent, #0066cc)", 
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                    fontSize: "0.875rem"
-                  }}
-                >
-                  {processPreviewTemplate(formData.cta_text)}
-                </button>
-              )}
+          <Preview scaleFactor={0.8}>
+          {formData.title || formData.description || formData.cta_text ? (
+            <div
+              style={{
+                position: "relative",
+                width: "400px",
+                height: "300px",
+                backgroundColor: "rgb(var(--page-background))",
+                padding: "var(--spacer-4)",
+              }}
+            >
+              <div style={{ 
+                position: "absolute", 
+                bottom: "20px", 
+                left: "20px",
+                maxWidth: "360px" 
+              }}>
+                <SocialProofWidget
+                  widget={getPreviewWidgetData()}
+                  productData={getPreviewProductData()}
+                  disableAnalytics
+                  className="preview-mode"
+                />
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: "var(--spacer-4)",
+                textAlign: "center",
+                color: "var(--text-muted)",
+                fontStyle: "italic",
+              }}
+            >
+              Your widget preview will appear here
             </div>
           )}
-          {!formData.title && !formData.description && !formData.cta_text && (
-            <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Your widget preview will appear here</p>
-          )}
+          </Preview>
         </div>
       </aside>
     </div>
