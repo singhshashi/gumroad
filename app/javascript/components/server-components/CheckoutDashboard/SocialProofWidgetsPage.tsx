@@ -445,12 +445,12 @@ const WidgetFormModal = ({
       const firstProduct = products[0];
       productThumbnailUrl = firstProduct?.thumbnail_url || "https://via.placeholder.com/48x48/4ecdc4/ffffff?text=📦";
     } else if (imageType === "icon") {
-      // Find the selected icon and get its name
+      // Find the selected icon and get its name directly from iconOptions
       const selectedIcon = iconOptions.find(icon => icon.id === formData.selected_icon);
       iconClass = selectedIcon?.icon_name || "lighting-fill";
     }
 
-    return {
+    const widgetData = {
       id: "preview-widget",
       title: formData.title,
       description: formData.description,
@@ -459,8 +459,12 @@ const WidgetFormModal = ({
       image_type: imageType,
       custom_image_url: customImageUrl,
       icon_class: iconClass,
+      icon_color: formData.icon_color,
       product_thumbnail_url: productThumbnailUrl,
     };
+
+
+    return widgetData;
   };
 
   return (

@@ -15,6 +15,7 @@ type SocialProofWidgetData = {
   image_type: string;
   custom_image_url?: string;
   icon_class?: string;
+  icon_color?: string;
   product_thumbnail_url?: string;
 };
 
@@ -101,6 +102,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
   }, [widget, productData]);
 
   const renderImage = () => {
+
     if (widget.image_type === "custom_image" && widget.custom_image_url) {
       return <img src={widget.custom_image_url} alt="" className="widget-image" />;
     }
@@ -110,7 +112,31 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
     }
 
     if (widget.image_type === "icon" && widget.icon_class) {
-      return <Icon name={widget.icon_class as any} className="widget-icon" />;
+      const iconColor = widget.icon_color || "#6b7280";
+      
+      // Convert hex to rgba with 15% opacity for background
+      const hexToRgba = (hex: string, alpha: number) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      };
+      
+      return (
+        <div 
+          className={`widget-icon ${widget.icon_color ? 'widget-icon--custom-color' : ''}`}
+          style={{
+            backgroundColor: widget.icon_color ? hexToRgba(iconColor, 0.15) : "#f3f4f6",
+            borderColor: '#000000',
+          }}
+        >
+          <Icon 
+            name={widget.icon_class as any} 
+            className="widget-icon__svg"
+            style={{ color: iconColor }}
+          />
+        </div>
+      );
     }
 
     if (widget.image_type === "none") {

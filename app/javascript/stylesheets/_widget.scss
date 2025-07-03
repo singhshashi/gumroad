@@ -154,29 +154,29 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f3f4f6;
     border-radius: 8px;
-    font-size: 20px;
-    color: #6b7280;
+    border: 1px solid;
     flex-shrink: 0;
+    
+    // Only set default background and border if no custom color
+    &:not(.widget-icon--custom-color) {
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+    }
 
     @media (max-width: 480px) {
       width: 40px;
       height: 40px;
-      font-size: 18px;
     }
 
-    // Icon color themes
-    &.fa-fire { color: #ef4444; background: #fef2f2; }
-    &.fa-heart { color: #ec4899; background: #fdf2f8; }
-    &.fa-check-circle { color: #10b981; background: #f0fdf4; }
-    &.fa-shopping-cart { color: #3b82f6; background: #eff6ff; }
-    &.fa-users { color: #8b5cf6; background: #f5f3ff; }
-    &.fa-star { color: #f59e0b; background: #fffbeb; }
-    &.fa-sparkles { color: #06b6d4; background: #f0fdfa; }
-    &.fa-clock { color: #6b7280; background: #f9fafb; }
-    &.fa-gift { color: #ec4899; background: #fdf2f8; }
-    &.fa-bolt { color: #f59e0b; background: #fffbeb; }
+    // The actual icon inside the container
+    &__svg {
+      font-size: 16px;
+      
+      @media (max-width: 480px) {
+        font-size: 14px;
+      }
+    }
   }
 
   .widget-cta-button {
@@ -212,8 +212,9 @@
 
   // Dark theme support
   @media (prefers-color-scheme: dark) {
-    background: #1f2937;
-    border-color: #374151;
+    .social-proof-widget {
+      background: #1f2937;
+      border-color: #374151;
 
     &__close {
       color: #9ca3af;
@@ -233,20 +234,15 @@
     }
 
     .widget-icon {
-      background: #374151;
-      color: #9ca3af;
+      // Only set default dark background and border if no custom color
+      &:not(.widget-icon--custom-color) {
+        background: #374151;
+        border-color: #4b5563;
+      }
 
-      // Dark theme icon colors
-      &.fa-fire { color: #f87171; background: #422918; }
-      &.fa-heart { color: #f472b6; background: #442432; }
-      &.fa-check-circle { color: #34d399; background: #1e3a2e; }
-      &.fa-shopping-cart { color: #60a5fa; background: #1e3a8a; }
-      &.fa-users { color: #a78bfa; background: #2e1a4e; }
-      &.fa-star { color: #fbbf24; background: #3e2e11; }
-      &.fa-sparkles { color: #22d3ee; background: #134e4a; }
-      &.fa-clock { color: #9ca3af; background: #374151; }
-      &.fa-gift { color: #f472b6; background: #442432; }
-      &.fa-bolt { color: #fbbf24; background: #3e2e11; }
+      &__svg {
+        color: #9ca3af;
+      }
     }
 
     .widget-cta-link {
@@ -255,6 +251,7 @@
       &:hover {
         color: #93c5fd;
       }
+    }
     }
   }
 
