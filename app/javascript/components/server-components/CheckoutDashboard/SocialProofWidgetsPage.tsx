@@ -374,7 +374,7 @@ const WidgetFormModal = ({
     description: widget?.description || "",
     cta_text: widget?.cta_text || "",
     cta_type: widget?.cta_type || ("button" as const),
-    image_type: widget?.image_type || "product_thumbnail",
+    image_type: widget?.image_type || "none",
     selected_icon: widget?.image_type?.startsWith('icon_') ? widget.image_type : "icon_solid_fire",
     icon_color: widget?.icon_color || "#D73027",
     custom_image_url: widget?.custom_image_url || "",
@@ -384,6 +384,7 @@ const WidgetFormModal = ({
 
   const [focusedField, setFocusedField] = React.useState<"title" | "description" | "cta_text" | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const uid = React.useId();
 
   const handleInsertVariable = (variable: string) => {
     if (!focusedField) return;
@@ -505,10 +506,10 @@ const WidgetFormModal = ({
           <section>
             <fieldset>
               <legend>
-                <label htmlFor="name">Widget name</label>
+                <label htmlFor={`${uid}-name`}>Widget name</label>
               </legend>
               <input
-                id="name"
+                id={`${uid}-name`}
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
@@ -520,11 +521,11 @@ const WidgetFormModal = ({
 
             <fieldset>
               <legend>
-                <label htmlFor="products">Products</label>
+                <label htmlFor={`${uid}-products`}>Products</label>
               </legend>
               <Select
-                inputId="products"
-                instanceId="products"
+                inputId={`${uid}-products`}
+                instanceId={`${uid}-products`}
                 options={products.map(({ id, name: label }) => ({ id, label }))}
                 value={products
                   .filter(({ id }) => formData.link_ids.includes(id))
@@ -559,10 +560,10 @@ const WidgetFormModal = ({
 
             <fieldset>
               <legend>
-                <label htmlFor="title">Title</label>
+                <label htmlFor={`${uid}-title`}>Title</label>
               </legend>
               <input
-                id="title"
+                id={`${uid}-title`}
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
@@ -576,10 +577,10 @@ const WidgetFormModal = ({
 
             <fieldset>
               <legend>
-                <label htmlFor="description">Description</label>
+                <label htmlFor={`${uid}-description`}>Description</label>
               </legend>
               <textarea
-                id="description"
+                id={`${uid}-description`}
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 onFocus={() => setFocusedField("description")}
@@ -593,10 +594,10 @@ const WidgetFormModal = ({
 
             <fieldset>
               <legend>
-                <label htmlFor="cta_text">Call to action text</label>
+                <label htmlFor={`${uid}-cta_text`}>Call to action text</label>
               </legend>
               <input
-                id="cta_text"
+                id={`${uid}-cta_text`}
                 type="text"
                 value={formData.cta_text}
                 onChange={(e) => setFormData((prev) => ({ ...prev, cta_text: e.target.value }))}
@@ -610,10 +611,10 @@ const WidgetFormModal = ({
 
             <fieldset>
               <legend>
-                <label htmlFor="cta_type">Call to action</label>
+                <label htmlFor={`${uid}-cta_type`}>Call to action</label>
               </legend>
               <TypeSafeOptionSelect
-                id="cta_type"
+                id={`${uid}-cta_type`}
                 value={formData.cta_type}
                 options={ctaTypeOptions}
                 onChange={(value) => setFormData((prev) => ({ ...prev, cta_type: value }))}
@@ -628,10 +629,10 @@ const WidgetFormModal = ({
 
             <fieldset>
               <legend>
-                <label htmlFor="image_type">Image source</label>
+                <label htmlFor={`${uid}-image_type`}>Image source</label>
               </legend>
               <TypeSafeOptionSelect
-                id="image_type"
+                id={`${uid}-image_type`}
                 value={formData.image_type}
                 options={imageTypeOptions}
                 onChange={(value) => setFormData((prev) => ({ ...prev, image_type: value }))}
@@ -702,22 +703,14 @@ const WidgetFormModal = ({
 
                 <fieldset>
                   <legend>Icon color</legend>
-                  <input
-                    type="color"
-                    value={formData.icon_color}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, icon_color: e.target.value }))}
-                    style={{
-                      width: "48px",
-                      height: "48px",
-                      borderRadius: "50%",
-                      border: "2px solid var(--border-color)",
-                      cursor: "pointer",
-                      padding: "0",
-                      WebkitAppearance: "none",
-                      MozAppearance: "none",
-                      appearance: "none",
-                    }}
-                  />
+                  <div className="color-picker"> 
+                    <input
+                      id={`${uid}-icon_color`}
+                      type="color"
+                      value={formData.icon_color}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, icon_color: e.target.value }))}
+                    />
+                  </div>
                 </fieldset>
               </>
             )}

@@ -210,7 +210,7 @@ class SocialProofWidget < ApplicationRecord
   def set_defaults
     self.enabled = true if enabled.nil?
     self.cta_type ||= 'button'
-    self.image_type ||= 'product_thumbnail'
+    self.image_type ||= 'none'
   end
   
   def universal_widget_limit
