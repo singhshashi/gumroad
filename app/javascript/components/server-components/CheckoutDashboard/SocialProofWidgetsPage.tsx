@@ -9,6 +9,7 @@ import { writeQueryParams } from "$app/utils/url";
 import { Button } from "$app/components/Button";
 import { Layout, Page } from "$app/components/CheckoutDashboard/Layout";
 import { Icon } from "$app/components/Icons";
+import { ImageUploader } from "$app/components/ImageUploader";
 import { Pagination, PaginationProps } from "$app/components/Pagination";
 import { Popover } from "$app/components/Popover";
 import { Preview } from "$app/components/Preview";
@@ -70,6 +71,7 @@ type SocialProofWidget = {
   cta_type: "button" | "link" | "none";
   image_type: string;
   custom_image_url?: string | null;
+  icon_color?: string | null;
   enabled: boolean;
   icon_class?: string | null;
   created_at: string;
@@ -88,6 +90,12 @@ type ImageTypeOption = {
   label: string;
 };
 
+type IconOption = {
+  id: string;
+  label: string;
+  icon_name: string;
+};
+
 type CtaTypeOption = {
   id: "button" | "link" | "none";
   label: string;
@@ -97,6 +105,7 @@ type SocialProofWidgetsPageProps = {
   widgets: SocialProofWidget[];
   products: Product[];
   image_type_options: ImageTypeOption[];
+  icon_options: IconOption[];
   cta_type_options: CtaTypeOption[];
   pagination: PaginationProps | null;
   pages: Page[];
@@ -106,6 +115,7 @@ const SocialProofWidgetsPage = ({
   widgets,
   products,
   image_type_options,
+  icon_options,
   cta_type_options,
   pagination,
   pages,
@@ -319,6 +329,7 @@ const SocialProofWidgetsPage = ({
       widget={editingWidget}
       products={products}
       imageTypeOptions={image_type_options}
+      iconOptions={icon_options}
       ctaTypeOptions={cta_type_options}
       view={view}
       onClose={() => setView("list")}
@@ -339,6 +350,7 @@ const WidgetFormModal = ({
   widget,
   products,
   imageTypeOptions,
+  iconOptions,
   ctaTypeOptions,
   view,
   onClose,
@@ -347,6 +359,7 @@ const WidgetFormModal = ({
   widget: SocialProofWidget | null;
   products: Product[];
   imageTypeOptions: ImageTypeOption[];
+  iconOptions: IconOption[];
   ctaTypeOptions: CtaTypeOption[];
   view: "create" | "edit";
   onClose: () => void;
@@ -362,6 +375,8 @@ const WidgetFormModal = ({
     cta_text: widget?.cta_text || "",
     cta_type: widget?.cta_type || ("button" as const),
     image_type: widget?.image_type || "product_thumbnail",
+    selected_icon: widget?.image_type?.startsWith('icon_') ? widget.image_type : "icon_solid_fire",
+    icon_color: widget?.icon_color || "#D73027",
     custom_image_url: widget?.custom_image_url || "",
     enabled: widget?.enabled ?? true,
     link_ids: widget?.products?.map((p) => p.id) || [],
@@ -429,21 +444,10 @@ const WidgetFormModal = ({
       // Use first product's thumbnail or a placeholder
       const firstProduct = products[0];
       productThumbnailUrl = firstProduct?.thumbnail_url || "https://via.placeholder.com/48x48/4ecdc4/ffffff?text=📦";
-    } else {
-      // Handle icon types
-      const iconMap: Record<string, string> = {
-        icon_solid_fire: "fa fa-fire",
-        icon_solid_heart: "fa fa-heart",
-        icon_patch_check_fill: "fa fa-check-circle",
-        icon_cart3_fill: "fa fa-shopping-cart",
-        icon_solid_users: "fa fa-users",
-        icon_star_fill: "fa fa-star",
-        icon_solid_sparkles: "fa fa-sparkles",
-        icon_clock_fill: "fa fa-clock",
-        icon_solid_gift: "fa fa-gift",
-        icon_solid_lightning_bolt: "fa fa-bolt",
-      };
-      iconClass = iconMap[imageType] || "fa fa-fire";
+    } else if (imageType === "icon") {
+      // Find the selected icon and get its name
+      const selectedIcon = iconOptions.find(icon => icon.id === formData.selected_icon);
+      iconClass = selectedIcon?.icon_name || "lighting-fill";
     }
 
     return {
@@ -632,18 +636,86 @@ const WidgetFormModal = ({
 
             {formData.image_type === "custom_image" && (
               <fieldset>
-                <legend>
-                  <label htmlFor="custom_image_url">Custom image URL</label>
-                </legend>
-                <input
-                  id="custom_image_url"
-                  type="url"
-                  value={formData.custom_image_url}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, custom_image_url: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                  required
+                <ImageUploader
+                  id="custom_image"
+                  helpText="Your image should be square, at least 600x600px, and JPG, PNG or GIF format."
+                  imageUrl={formData.custom_image_url || null}
+                  allowedExtensions={["jpg", "jpeg", "png", "gif"]}
+                  onSelectFile={async (file: File) => {
+                    // TODO: Implement file upload to S3 or similar
+                    // For now, create a temporary URL for preview
+                    const imageUrl = URL.createObjectURL(file);
+                    setFormData((prev) => ({ ...prev, custom_image_url: imageUrl }));
+                  }}
+                  onRemove={() => {
+                    setFormData((prev) => ({ ...prev, custom_image_url: "" }));
+                  }}
+                  imageAlt="Custom widget image"
+                  disabled={isSubmitting}
                 />
               </fieldset>
+            )}
+
+            {formData.image_type === "icon" && (
+              <>
+                <fieldset>
+                  <div
+                    className="radio-buttons"
+                    role="radiogroup"
+                    aria-label="Select icon"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(10, 1fr)",
+                      gap: "var(--spacer-2)",
+                      marginBottom: "var(--spacer-3)",
+                    }}
+                  >
+                    {iconOptions.map((icon) => (
+                      <Button
+                        key={icon.id}
+                        role="radio"
+                        aria-checked={formData.selected_icon === icon.id}
+                        aria-label={icon.label}
+                        onClick={() => setFormData((prev) => ({ ...prev, selected_icon: icon.id }))}
+                        className={cx(
+                          "icon-select-button",
+                          formData.selected_icon === icon.id && "selected"
+                        )}
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          padding: "0",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Icon name={icon.icon_name as any} style={{ color: "#000000", fontSize: "20px" }} />
+                      </Button>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Icon color</legend>
+                  <input
+                    type="color"
+                    value={formData.icon_color}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, icon_color: e.target.value }))}
+                    style={{
+                      width: "48px",
+                      height: "48px",
+                      borderRadius: "50%",
+                      border: "2px solid var(--border-color)",
+                      cursor: "pointer",
+                      padding: "0",
+                      WebkitAppearance: "none",
+                      MozAppearance: "none",
+                      appearance: "none",
+                    }}
+                  />
+                </fieldset>
+              </>
             )}
           </section>
         </form>

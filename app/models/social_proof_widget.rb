@@ -46,6 +46,7 @@ class SocialProofWidget < ApplicationRecord
   scope :enabled_widgets, -> { alive.is_enabled }
   
   attr_json_data_accessor :custom_image_url, default: -> { nil }
+  attr_json_data_accessor :icon_color, default: -> { '#000000' }
   attr_json_data_accessor :analytics_data, default: -> { {} }
   
   before_validation :set_defaults, on: :create

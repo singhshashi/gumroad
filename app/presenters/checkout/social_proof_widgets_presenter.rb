@@ -26,6 +26,7 @@ class Checkout::SocialProofWidgetsPresenter
         }
       end,
       image_type_options: image_type_options,
+      icon_options: icon_options,
       cta_type_options: cta_type_options,
     }
   end
@@ -43,6 +44,7 @@ class Checkout::SocialProofWidgetsPresenter
       cta_type: widget.cta_type,
       image_type: widget.image_type,
       custom_image_url: widget.custom_image_url,
+      icon_color: widget.icon_color,
       enabled: widget.enabled?,
       icon_class: widget.icon_class,
       created_at: widget.created_at.iso8601,
@@ -90,18 +92,25 @@ class Checkout::SocialProofWidgetsPresenter
 
   def image_type_options
     [
-      { id: 'product_thumbnail', label: 'Product Thumbnail' },
-      { id: 'custom_image', label: 'Custom Image' },
-      { id: 'icon_solid_fire', label: 'Fire Icon' },
-      { id: 'icon_solid_heart', label: 'Heart Icon' },
-      { id: 'icon_patch_check_fill', label: 'Check Icon' },
-      { id: 'icon_cart3_fill', label: 'Cart Icon' },
-      { id: 'icon_solid_users', label: 'Users Icon' },
-      { id: 'icon_star_fill', label: 'Star Icon' },
-      { id: 'icon_solid_sparkles', label: 'Sparkles Icon' },
-      { id: 'icon_clock_fill', label: 'Clock Icon' },
-      { id: 'icon_solid_gift', label: 'Gift Icon' },
-      { id: 'icon_solid_lightning_bolt', label: 'Lightning Icon' },
+      { id: 'product_thumbnail', label: 'Product image' },
+      { id: 'custom_image', label: 'Custom image' },
+      { id: 'none', label: 'None' },
+      { id: 'icon', label: 'Icon' },
+    ]
+  end
+
+  def icon_options
+    [
+      { id: 'icon_solid_fire', label: 'Fire', icon_name: 'flame-fill' },
+      { id: 'icon_solid_heart', label: 'Heart', icon_name: 'heart-fill' },
+      { id: 'icon_patch_check_fill', label: 'Check', icon_name: 'solid-check-circle' },
+      { id: 'icon_cart3_fill', label: 'Cart', icon_name: 'cart3-fill' },
+      { id: 'icon_solid_users', label: 'Users', icon_name: 'people-fill' },
+      { id: 'icon_star_fill', label: 'Star', icon_name: 'solid-star' },
+      { id: 'icon_solid_sparkles', label: 'Sparkles', icon_name: 'stickies' },
+      { id: 'icon_clock_fill', label: 'Clock', icon_name: 'clock-history' },
+      { id: 'icon_solid_gift', label: 'Gift', icon_name: 'gift-fill' },
+      { id: 'icon_solid_lightning_bolt', label: 'Lightning', icon_name: 'lighting-fill' },
     ]
   end
 

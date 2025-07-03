@@ -109,8 +109,12 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
       return <img src={widget.product_thumbnail_url} alt="" className="widget-image" />;
     }
 
-    if (widget.icon_class) {
-      return <i className={cx(widget.icon_class, "widget-icon")} />;
+    if (widget.image_type === "icon" && widget.icon_class) {
+      return <Icon name={widget.icon_class as any} className="widget-icon" />;
+    }
+
+    if (widget.image_type === "none") {
+      return null;
     }
 
     return null;

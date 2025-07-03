@@ -378,3 +378,24 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
   }
 }
+
+// Icon selection buttons for widget creation form
+.icon-select-button {
+  &[role="radio"] {
+    border: 1px solid #000000 !important;
+    background: white !important;
+    
+    &[aria-checked="true"] {
+      border: 1px solid #000000 !important;
+      background: white !important;
+    }
+    
+    &:hover {
+      border-color: #000000 !important;
+      
+      &[aria-checked="true"] {
+        border-color: #000000 !important;
+      }
+    }
+  }
+}
