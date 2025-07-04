@@ -21,6 +21,36 @@ import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
 
 import placeholder from "$assets/images/placeholders/social_widgets.png";
 
+// Helper to safely cast known-valid icon names from backend
+const toIconName = (iconName: string | null | undefined): IconName => iconName as IconName;
+
+// Static configuration options (no server data needed)
+const ICON_OPTIONS: IconOption[] = [
+  { id: "icon_solid_fire", label: "Fire", icon_name: "flame-fill" },
+  { id: "icon_solid_heart", label: "Heart", icon_name: "heart-fill" },
+  { id: "icon_patch_check_fill", label: "Check", icon_name: "solid-check-circle" },
+  { id: "icon_cart3_fill", label: "Cart", icon_name: "cart3-fill" },
+  { id: "icon_solid_users", label: "Users", icon_name: "people-fill" },
+  { id: "icon_star_fill", label: "Star", icon_name: "solid-star" },
+  { id: "icon_solid_sparkles", label: "Sparkles", icon_name: "stickies" },
+  { id: "icon_clock_fill", label: "Clock", icon_name: "clock-history" },
+  { id: "icon_solid_gift", label: "Gift", icon_name: "gift-fill" },
+  { id: "icon_solid_lightning_bolt", label: "Lightning", icon_name: "lighting-fill" },
+];
+
+const CTA_TYPE_OPTIONS: CtaTypeOption[] = [
+  { id: "button", label: "Button" },
+  { id: "link", label: "Link" },
+  { id: "none", label: "No CTA" },
+];
+
+const IMAGE_TYPE_OPTIONS: ImageTypeOption[] = [
+  { id: "product_thumbnail", label: "Product image" },
+  { id: "custom_image", label: "Custom image" },
+  { id: "none", label: "None" },
+  { id: "icon", label: "Icon" },
+];
+
 type VariableInsertionButtonsProps = {
   onInsertVariable: (variable: string) => void;
 };
@@ -71,9 +101,9 @@ type SocialProofWidget = {
   cta_type: "button" | "link" | "none";
   image_type: string;
   custom_image_url?: string | null;
+  icon_name?: string | null;
   icon_color?: string | null;
   enabled: boolean;
-  icon_class?: string | null;
   created_at: string;
   updated_at: string;
   products?: Product[] | null;
@@ -93,7 +123,7 @@ type ImageTypeOption = {
 type IconOption = {
   id: string;
   label: string;
-  icon_name: string;
+  icon_name: IconName;
 };
 
 type CtaTypeOption = {
@@ -104,22 +134,11 @@ type CtaTypeOption = {
 type SocialProofWidgetsPageProps = {
   widgets: SocialProofWidget[];
   products: Product[];
-  image_type_options: ImageTypeOption[];
-  icon_options: IconOption[];
-  cta_type_options: CtaTypeOption[];
   pagination: PaginationProps | null;
   pages: Page[];
 };
 
-const SocialProofWidgetsPage = ({
-  widgets,
-  products,
-  image_type_options,
-  icon_options,
-  cta_type_options,
-  pagination,
-  pages,
-}: SocialProofWidgetsPageProps) => {
+const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: SocialProofWidgetsPageProps) => {
   const [widgetsList, setWidgetsList] = React.useState(widgets);
   const [isLoading, setIsLoading] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -270,7 +289,9 @@ const SocialProofWidgetsPage = ({
 
                       <div className="widget-content">
                         <div className="widget-preview">
-                          {widget.icon_class ? <i className={widget.icon_class} /> : null}
+                          {widget.icon_name && widget.image_type === "icon" ? (
+                            <Icon name={toIconName(widget.icon_name)} />
+                          ) : null}
                           {widget.title ? <h5>{widget.title}</h5> : null}
                           {widget.description ? <p>{widget.description}</p> : null}
                           {widget.cta_text && widget.cta_type !== "none" ? (
@@ -328,9 +349,6 @@ const SocialProofWidgetsPage = ({
     <WidgetFormModal
       widget={editingWidget}
       products={products}
-      imageTypeOptions={image_type_options}
-      iconOptions={icon_options}
-      ctaTypeOptions={cta_type_options}
       view={view}
       onClose={() => setView("list")}
       onSave={(widget) => {
@@ -349,18 +367,12 @@ const SocialProofWidgetsPage = ({
 const WidgetFormModal = ({
   widget,
   products,
-  imageTypeOptions,
-  iconOptions,
-  ctaTypeOptions,
   view,
   onClose,
   onSave,
 }: {
   widget: SocialProofWidget | null;
   products: Product[];
-  imageTypeOptions: ImageTypeOption[];
-  iconOptions: IconOption[];
-  ctaTypeOptions: CtaTypeOption[];
   view: "create" | "edit";
   onClose: () => void;
   onSave: (widget: SocialProofWidget) => void;
@@ -375,7 +387,7 @@ const WidgetFormModal = ({
     cta_text: widget?.cta_text || "",
     cta_type: widget?.cta_type || ("button" as const),
     image_type: widget?.image_type || "none",
-    selected_icon: widget?.image_type?.startsWith('icon_') ? widget.image_type : "icon_solid_fire",
+    icon_name: widget?.icon_name || "flame-fill",
     icon_color: widget?.icon_color || "#D73027",
     custom_image_url: widget?.custom_image_url || "",
     enabled: widget?.enabled ?? true,
@@ -384,15 +396,60 @@ const WidgetFormModal = ({
 
   const [focusedField, setFocusedField] = React.useState<"title" | "description" | "cta_text" | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [validationErrors, setValidationErrors] = React.useState<Record<string, string[]>>({});
   const uid = React.useId();
+
+  // Template validation helpers
+  const validateTemplateString = (value: string): string[] => {
+    const errors: string[] = [];
+
+    if (!value) return errors;
+
+    // Check for unmatched braces
+    const openBraces = (value.match(/\{\{/gu) || []).length;
+    const closeBraces = (value.match(/\}\}/gu) || []).length;
+
+    if (openBraces !== closeBraces) {
+      errors.push("Unmatched template braces");
+    }
+
+    // Check for empty variables
+    if (value.match(/\{\{\s*\}\}/u)) {
+      errors.push("Empty template variables not allowed");
+    }
+
+    // Check for nested braces
+    if (value.match(/\{\{[^}]*\{\{/u) || value.match(/\}\}[^{]*\}\}/u)) {
+      errors.push("Nested or malformed template braces");
+    }
+
+    // Check for invalid variables
+    const allowedVariables = ["product_name", "price", "total_sales", "country", "customer_name", "recent_sale_time"];
+    const variables = (value.match(/\{\{([^}]+)\}\}/gu) || []).map((v) => v.replace(/\{\{|\}\}/gu, "").trim());
+    const invalidVariables = variables.filter((v) => !allowedVariables.includes(v));
+
+    if (invalidVariables.length > 0) {
+      errors.push(`Invalid variables: ${invalidVariables.join(", ")}`);
+    }
+
+    return errors;
+  };
+
+  const handleFieldChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Real-time template validation for template fields
+    if (["title", "description", "cta_text"].includes(field)) {
+      const errors = validateTemplateString(value);
+      setValidationErrors((prev) => ({ ...prev, [field]: errors }));
+    }
+  };
 
   const handleInsertVariable = (variable: string) => {
     if (!focusedField) return;
 
-    setFormData((prev) => ({
-      ...prev,
-      [focusedField]: prev[focusedField] + variable + " ",
-    }));
+    const newValue = `${formData[focusedField] + variable} `;
+    handleFieldChange(focusedField, newValue);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -434,7 +491,6 @@ const WidgetFormModal = ({
     // Get the image type and related data
     const imageType = formData.image_type;
     let customImageUrl = formData.custom_image_url;
-    let iconClass = "";
     let productThumbnailUrl = "";
 
     // Handle different image types
@@ -445,10 +501,6 @@ const WidgetFormModal = ({
       // Use first product's thumbnail or a placeholder
       const firstProduct = products[0];
       productThumbnailUrl = firstProduct?.thumbnail_url || "https://via.placeholder.com/48x48/4ecdc4/ffffff?text=📦";
-    } else if (imageType === "icon") {
-      // Find the selected icon and get its name directly from iconOptions
-      const selectedIcon = iconOptions.find(icon => icon.id === formData.selected_icon);
-      iconClass = selectedIcon?.icon_name || "lighting-fill";
     }
 
     const widgetData = {
@@ -459,11 +511,10 @@ const WidgetFormModal = ({
       cta_type: formData.cta_type,
       image_type: imageType,
       custom_image_url: customImageUrl,
-      icon_class: iconClass,
+      icon_name: formData.icon_name,
       icon_color: formData.icon_color,
       product_thumbnail_url: productThumbnailUrl,
     };
-
 
     return widgetData;
   };
@@ -566,12 +617,22 @@ const WidgetFormModal = ({
                 id={`${uid}-title`}
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                onChange={(e) => handleFieldChange("title", e.target.value)}
                 onFocus={() => setFocusedField("title")}
                 onBlur={() => setFocusedField(null)}
-                placeholder="Join {{sales_count}} members today!"
+                placeholder="Join {{total_sales}} members today!"
                 maxLength={500}
+                className={validationErrors.title && validationErrors.title.length > 0 ? "error" : ""}
               />
+              {validationErrors.title && validationErrors.title.length > 0 ? (
+                <div className="field-errors">
+                  {validationErrors.title.map((error, index) => (
+                    <div key={index} className="error-message">
+                      {error}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               {focusedField === "title" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
             </fieldset>
 
@@ -582,13 +643,23 @@ const WidgetFormModal = ({
               <textarea
                 id={`${uid}-description`}
                 value={formData.description}
-                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                onChange={(e) => handleFieldChange("description", e.target.value)}
                 onFocus={() => setFocusedField("description")}
                 onBlur={() => setFocusedField(null)}
                 placeholder="Get lifetime access to the {{product_name}} and start your entrepreneurial journey now."
                 maxLength={1000}
                 rows={3}
+                className={validationErrors.description && validationErrors.description.length > 0 ? "error" : ""}
               />
+              {validationErrors.description && validationErrors.description.length > 0 ? (
+                <div className="field-errors">
+                  {validationErrors.description.map((error, index) => (
+                    <div key={index} className="error-message">
+                      {error}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               {focusedField === "description" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
             </fieldset>
 
@@ -600,12 +671,22 @@ const WidgetFormModal = ({
                 id={`${uid}-cta_text`}
                 type="text"
                 value={formData.cta_text}
-                onChange={(e) => setFormData((prev) => ({ ...prev, cta_text: e.target.value }))}
+                onChange={(e) => handleFieldChange("cta_text", e.target.value)}
                 onFocus={() => setFocusedField("cta_text")}
                 onBlur={() => setFocusedField(null)}
                 placeholder="Purchase Now - {{price}}"
                 maxLength={255}
+                className={validationErrors.cta_text && validationErrors.cta_text.length > 0 ? "error" : ""}
               />
+              {validationErrors.cta_text && validationErrors.cta_text.length > 0 ? (
+                <div className="field-errors">
+                  {validationErrors.cta_text.map((error, index) => (
+                    <div key={index} className="error-message">
+                      {error}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               {focusedField === "cta_text" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
             </fieldset>
 
@@ -616,7 +697,7 @@ const WidgetFormModal = ({
               <TypeSafeOptionSelect
                 id={`${uid}-cta_type`}
                 value={formData.cta_type}
-                options={ctaTypeOptions}
+                options={CTA_TYPE_OPTIONS}
                 onChange={(value) => setFormData((prev) => ({ ...prev, cta_type: value }))}
               />
             </fieldset>
@@ -634,7 +715,7 @@ const WidgetFormModal = ({
               <TypeSafeOptionSelect
                 id={`${uid}-image_type`}
                 value={formData.image_type}
-                options={imageTypeOptions}
+                options={IMAGE_TYPE_OPTIONS}
                 onChange={(value) => setFormData((prev) => ({ ...prev, image_type: value }))}
               />
             </fieldset>
@@ -675,17 +756,14 @@ const WidgetFormModal = ({
                       marginBottom: "var(--spacer-3)",
                     }}
                   >
-                    {iconOptions.map((icon) => (
+                    {ICON_OPTIONS.map((icon) => (
                       <Button
                         key={icon.id}
                         role="radio"
-                        aria-checked={formData.selected_icon === icon.id}
+                        aria-checked={formData.icon_name === icon.icon_name}
                         aria-label={icon.label}
-                        onClick={() => setFormData((prev) => ({ ...prev, selected_icon: icon.id }))}
-                        className={cx(
-                          "icon-select-button",
-                          formData.selected_icon === icon.id && "selected"
-                        )}
+                        onClick={() => setFormData((prev) => ({ ...prev, icon_name: icon.icon_name }))}
+                        className={cx("icon-select-button", formData.icon_name === icon.icon_name && "selected")}
                         style={{
                           width: "48px",
                           height: "48px",
@@ -695,7 +773,7 @@ const WidgetFormModal = ({
                           justifyContent: "center",
                         }}
                       >
-                        <Icon name={icon.icon_name as any} style={{ color: "#000000", fontSize: "20px" }} />
+                        <Icon name={icon.icon_name} style={{ color: "#000000", fontSize: "20px" }} />
                       </Button>
                     ))}
                   </div>
@@ -703,7 +781,7 @@ const WidgetFormModal = ({
 
                 <fieldset>
                   <legend>Icon color</legend>
-                  <div className="color-picker"> 
+                  <div className="color-picker">
                     <input
                       id={`${uid}-icon_color`}
                       type="color"
@@ -731,42 +809,44 @@ const WidgetFormModal = ({
           }}
         >
           <Preview scaleFactor={0.8}>
-          {formData.title || formData.description || formData.cta_text ? (
-            <div
-              style={{
-                position: "relative",
-                width: "400px",
-                height: "300px",
-                backgroundColor: "rgb(var(--page-background))",
-                padding: "var(--spacer-4)",
-              }}
-            >
-              <div style={{ 
-                position: "absolute", 
-                bottom: "20px", 
-                left: "20px",
-                maxWidth: "360px" 
-              }}>
-                <SocialProofWidget
-                  widget={getPreviewWidgetData()}
-                  productData={getPreviewProductData()}
-                  disableAnalytics
-                  className="preview-mode"
-                />
+            {formData.title || formData.description || formData.cta_text ? (
+              <div
+                style={{
+                  position: "relative",
+                  width: "400px",
+                  height: "300px",
+                  backgroundColor: "rgb(var(--page-background))",
+                  padding: "var(--spacer-4)",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "20px",
+                    left: "20px",
+                    maxWidth: "360px",
+                  }}
+                >
+                  <SocialProofWidget
+                    widget={getPreviewWidgetData()}
+                    productData={getPreviewProductData()}
+                    disableAnalytics
+                    className="preview-mode"
+                  />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div
-              style={{
-                padding: "var(--spacer-4)",
-                textAlign: "center",
-                color: "var(--text-muted)",
-                fontStyle: "italic",
-              }}
-            >
-              Your widget preview will appear here
-            </div>
-          )}
+            ) : (
+              <div
+                style={{
+                  padding: "var(--spacer-4)",
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                  fontStyle: "italic",
+                }}
+              >
+                Your widget preview will appear here
+              </div>
+            )}
           </Preview>
         </div>
       </aside>

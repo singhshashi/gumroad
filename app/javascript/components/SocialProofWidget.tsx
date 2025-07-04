@@ -6,6 +6,9 @@ import { asyncVoid } from "$app/utils/promise";
 import { Button } from "$app/components/Button";
 import { Icon } from "$app/components/Icons";
 
+// Helper to safely cast known-valid icon names from backend
+const toIconName = (iconName: string | undefined): IconName => iconName as IconName;
+
 type SocialProofWidgetData = {
   id: string;
   title?: string;
@@ -14,7 +17,7 @@ type SocialProofWidgetData = {
   cta_type: "button" | "link" | "none";
   image_type: string;
   custom_image_url?: string;
-  icon_class?: string;
+  icon_name?: string;
   icon_color?: string;
   product_thumbnail_url?: string;
 };
@@ -89,7 +92,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
       let result = template;
       Object.entries(context).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
-        result = result.replace(new RegExp(placeholder.replace(/[{}]/g, "\\$&"), "g"), value);
+        result = result.replace(new RegExp(placeholder.replace(/[{}]/gu, "\\$&"), "gu"), value);
       });
       return result;
     };
@@ -102,7 +105,6 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
   }, [widget, productData]);
 
   const renderImage = () => {
-
     if (widget.image_type === "custom_image" && widget.custom_image_url) {
       return <img src={widget.custom_image_url} alt="" className="widget-image" />;
     }
@@ -111,9 +113,9 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
       return <img src={widget.product_thumbnail_url} alt="" className="widget-image" />;
     }
 
-    if (widget.image_type === "icon" && widget.icon_class) {
+    if (widget.image_type === "icon" && widget.icon_name) {
       const iconColor = widget.icon_color || "#6b7280";
-      
+
       // Convert hex to rgba with 15% opacity for background
       const hexToRgba = (hex: string, alpha: number) => {
         const r = parseInt(hex.slice(1, 3), 16);
@@ -121,20 +123,16 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         const b = parseInt(hex.slice(5, 7), 16);
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
       };
-      
+
       return (
-        <div 
-          className={`widget-icon ${widget.icon_color ? 'widget-icon--custom-color' : ''}`}
+        <div
+          className={`widget-icon ${widget.icon_color ? "widget-icon--custom-color" : ""}`}
           style={{
             backgroundColor: widget.icon_color ? hexToRgba(iconColor, 0.15) : "#f3f4f6",
-            borderColor: '#000000',
+            borderColor: "#000000",
           }}
         >
-          <Icon 
-            name={widget.icon_class as any} 
-            className="widget-icon__svg"
-            style={{ color: iconColor }}
-          />
+          <Icon name={toIconName(widget.icon_name)} className="widget-icon__svg" style={{ color: iconColor }} />
         </div>
       );
     }

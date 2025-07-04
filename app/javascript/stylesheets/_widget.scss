@@ -398,3 +398,41 @@
     }
   }
 }
+
+// Template validation error styles
+.field-errors {
+  margin-top: 4px;
+  
+  .error-message {
+    color: #dc2626;
+    font-size: 12px;
+    line-height: 1.3;
+    margin-bottom: 2px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Error state for inputs
+input.error,
+textarea.error {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 1px #dc2626 !important;
+}
+
+// Dark mode error styles
+@media (prefers-color-scheme: dark) {
+  .field-errors {
+    .error-message {
+      color: #fca5a5;
+    }
+  }
+  
+  input.error,
+  textarea.error {
+    border-color: #fca5a5 !important;
+    box-shadow: 0 0 0 1px #fca5a5 !important;
+  }
+}
