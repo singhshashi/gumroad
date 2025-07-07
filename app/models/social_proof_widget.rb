@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require Rails.root.join("app/constants/social_proof_template_variables")
+require Rails.root.join("app/modules/social_proof_template_variables")
 
 class SocialProofWidget < ApplicationRecord
   include Deletable

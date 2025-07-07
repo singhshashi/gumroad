@@ -34,8 +34,15 @@ export type SocialProofWidget = {
   icon_name?: SocialProofWidgetIconType | null;
   icon_color?: string | null;
   enabled: boolean;
-    //TODO: Add other variables that we have defined
-  products?: { id: string; name: string; url: string; thumbnail_url?: string | null; sales_count: number; price: string }[];
+  //TODO: Add other variables that we have defined
+  products?: {
+    id: string;
+    name: string;
+    url: string;
+    thumbnail_url?: string | null;
+    sales_count: number;
+    price: string;
+  }[];
   analytics: {
     impressions: number;
     clicks: number;

@@ -8,14 +8,14 @@ import { Icon } from "$app/components/Icons";
 
 export type SocialProofWidgetData = {
   id: string;
-  title: string;              // Required field (max 50 chars)
-  description: string;        // Required field (max 200 chars)
-  cta_text: string | null;    // Can be null when cta_type is "none"
+  title: string; // Required field (max 50 chars)
+  description: string; // Required field (max 200 chars)
+  cta_text: string | null; // Can be null when cta_type is "none"
   cta_type: "button" | "link" | "none";
   image_type: string;
-  custom_image_url?: string;   // Only when image_type is "custom_image"
-  icon_name?: SocialProofWidgetIconType;  // Only when image_type is "icon"
-  icon_color?: string;         // Only when image_type is "icon"
+  custom_image_url?: string; // Only when image_type is "custom_image"
+  icon_name?: SocialProofWidgetIconType; // Only when image_type is "icon"
+  icon_color?: string; // Only when image_type is "icon"
   // product_thumbnail_url removed - get from product data
 };
 

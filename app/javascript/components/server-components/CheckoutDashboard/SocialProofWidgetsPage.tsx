@@ -3,8 +3,6 @@ import cx from "classnames";
 import * as React from "react";
 import { createCast } from "ts-safe-cast";
 
-import { SOCIAL_PROOF_TEMPLATE_VARIABLES, getAllowedTemplateVariableKeys } from "$app/constants/socialProofTemplateVariables";
-
 import {
   createSocialProofWidget,
   updateSocialProofWidget,
@@ -19,6 +17,10 @@ import { ALLOWED_EXTENSIONS } from "$app/utils/file";
 import { asyncVoid } from "$app/utils/promise";
 import { request, AbortError, assertResponseError } from "$app/utils/request";
 import { register } from "$app/utils/serverComponentUtil";
+import {
+  SOCIAL_PROOF_TEMPLATE_VARIABLES,
+  getAllowedTemplateVariableKeys,
+} from "$app/utils/socialProofTemplateVariables";
 import { writeQueryParams } from "$app/utils/url";
 
 import { Button } from "$app/components/Button";
@@ -68,23 +70,20 @@ type VariableInsertionButtonsProps = {
   onInsertVariable: (variable: string) => void;
 };
 
-const VariableInsertionButtons: React.FC<VariableInsertionButtonsProps> = ({ onInsertVariable }) => {
-
-  return (
-    <div style={{ display: "flex", gap: "var(--spacer-2)", marginTop: "var(--spacer-2)", flexWrap: "wrap" }}>
-      {SOCIAL_PROOF_TEMPLATE_VARIABLES.map((item) => (
-        <Button
-          key={item.key}
-          small
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => onInsertVariable(item.variable)}
-        >
-          {item.label}
-        </Button>
-      ))}
-    </div>
-  );
-};
+const VariableInsertionButtons: React.FC<VariableInsertionButtonsProps> = ({ onInsertVariable }) => (
+  <div style={{ display: "flex", gap: "var(--spacer-2)", marginTop: "var(--spacer-2)", flexWrap: "wrap" }}>
+    {SOCIAL_PROOF_TEMPLATE_VARIABLES.map((item) => (
+      <Button
+        key={item.key}
+        small
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onInsertVariable(item.variable)}
+      >
+        {item.label}
+      </Button>
+    ))}
+  </div>
+);
 
 type Product = {
   id: string;
@@ -583,19 +582,17 @@ const WidgetFormModal = ({
     // For existing widgets, use the widget's associated products
     // For new widgets or universal widgets, use the first available product from all products
     let previewProduct: Product | undefined;
-    
+
     if (widget && !formData.universal && widget.products && widget.products.length > 0) {
       // Use the first product associated with this widget
       previewProduct = widget.products[0];
     } else if (!formData.universal && formData.link_ids.length > 0) {
       // For new widgets with selected products, find the first selected product
-      previewProduct = products.find(p => formData.link_ids.includes(p.id));
+      previewProduct = products.find((p) => formData.link_ids.includes(p.id));
     } else {
       // Fallback to first product from all products for universal widgets or when no products selected
       previewProduct = products[0];
     }
-
-    console.log("Previewing product:", previewProduct);
 
     return {
       name: previewProduct?.name || "Digital Marketing Course",
@@ -612,7 +609,7 @@ const WidgetFormModal = ({
     // Get the image type and related data
     const imageType = formData.image_type;
 
-    const widgetData: any = {
+    const widgetData: Partial<SocialProofWidget> = {
       id: "preview-widget",
       title: formData.title,
       description: formData.description,
@@ -987,16 +984,8 @@ const WidgetFormModal = ({
                     }}
                   >
                     <SocialProofWidget
-                      widget={(() => {
-                        const widgetData = getPreviewWidgetData();
-                        console.log("[WIDGET_PREVIEW] Widget data:", widgetData);
-                        return widgetData;
-                      })()}
-                      productData={(() => {
-                        const productData = getPreviewProductData();
-                        console.log("[WIDGET_PREVIEW] Product data:", productData);
-                        return productData;
-                      })()}
+                      widget={getPreviewWidgetData()}
+                      productData={getPreviewProductData()}
                       disableAnalytics
                       className="preview-mode"
                     />
