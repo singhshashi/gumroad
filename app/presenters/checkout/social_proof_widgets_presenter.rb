@@ -52,6 +52,7 @@ class Checkout::SocialProofWidgetsPresenter
           name: product.name,
           url: product.long_url,
           thumbnail_url: product.thumbnail_or_cover_url,
+          sales_count: product.successful_sales_count,
         }
       end,
       analytics: widget_analytics_summary(widget),

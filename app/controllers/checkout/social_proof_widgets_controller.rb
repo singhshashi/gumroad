@@ -5,8 +5,9 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
 
   PER_PAGE = 10
 
-  before_action :set_widget, only: [:show, :update, :destroy]
+  before_action :set_widget, only: [:show, :update, :destroy, :publish]
   before_action :clean_params, only: [:create, :update]
+  before_action :remove_enabled_from_update, only: [:update]
 
   def index
     authorize [:checkout, SocialProofWidget]
@@ -39,9 +40,9 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
 
     if @widget.save
       @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
-      render json: @presenter.widget_props(@widget), status: :created
+      render json: { success: true, widget: @presenter.widget_props(@widget) }
     else
-      render json: { errors: @widget.errors }, status: :unprocessable_entity
+      render json: { success: false, error: @widget.errors.first.message }
     end
   end
 
@@ -50,9 +51,9 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
 
     if @widget.update(widget_params)
       @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
-      render json: @presenter.widget_props(@widget)
+      render json: { success: true, widget: @presenter.widget_props(@widget) }
     else
-      render json: { errors: @widget.errors }, status: :unprocessable_entity
+      render json: { success: false, error: @widget.errors.first.message }
     end
   end
 
@@ -76,39 +77,65 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
     render json: { analytics: analytics_data }
   end
 
-  private
+  def publish
+    authorize [:checkout, @widget]
 
-  def set_widget
-    @widget = pundit_user.social_proof_widgets.find_by_external_id!(params[:id])
+    @widget.publish!
+    @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
+    render json: { success: true, widget: @presenter.widget_props(@widget) }
+  rescue => e
+    render json: { success: false, error: e.message }
   end
 
-  def fetch_widgets
-    widgets = pundit_user.social_proof_widgets.alive.order(created_at: :desc)
-    
-    if params[:search].present?
-      widgets = widgets.where("name ILIKE ?", "%#{params[:search]}%")
+  private
+    def set_widget
+      @widget = pundit_user.social_proof_widgets.find_by_external_id!(params[:id])
     end
 
-    pagy(widgets, items: PER_PAGE)
-  end
+    def fetch_widgets
+      widgets = pundit_user.social_proof_widgets.alive.order(created_at: :desc)
 
-  def widget_params
-    params.require(:social_proof_widget).permit(
-      :name,
-      :universal,
-      :title,
-      :description,
-      :cta_text,
-      :cta_type,
-      :image_type,
-      :custom_image_url,
-      :enabled,
-      link_ids: []
-    )
-  end
+      if params[:search].present?
+        widgets = widgets.where("name ILIKE ?", "%#{params[:search]}%")
+      end
 
-  def clean_params
-    params[:social_proof_widget][:link_ids] = params[:social_proof_widget][:link_ids]&.compact_blank
-    params[:social_proof_widget][:custom_image_url] = nil if params[:social_proof_widget][:image_type] != 'custom_image'
-  end
+      pagy(widgets, items: PER_PAGE)
+    end
+
+    def widget_params
+      params.require(:social_proof_widget).permit(
+        :name,
+        :universal,
+        :title,
+        :description,
+        :cta_text,
+        :cta_type,
+        :image_type,
+        :custom_image_url,
+        :icon_name,
+        :icon_color,
+        :enabled,
+        link_ids: []
+      )
+    end
+
+    def clean_params
+      # Convert external IDs to internal IDs for link_ids
+      if params[:social_proof_widget][:link_ids].present?
+        external_ids = params[:social_proof_widget][:link_ids].compact_blank
+        internal_ids = pundit_user.user.links.by_external_ids(external_ids).pluck(:id)
+        params[:social_proof_widget][:link_ids] = internal_ids
+      else
+        params[:social_proof_widget][:link_ids] = []
+      end
+
+      params[:social_proof_widget][:custom_image_url] = nil if params[:social_proof_widget][:image_type] != "custom_image"
+      params[:social_proof_widget][:icon_name] = nil if params[:social_proof_widget][:image_type] != "icon"
+      params[:social_proof_widget][:icon_color] = nil if params[:social_proof_widget][:image_type] != "icon"
+    end
+
+    def remove_enabled_from_update
+      # Remove enabled from params for updates - it should only be set via publish action
+      params[:social_proof_widget].delete(:enabled)
+    end
 end

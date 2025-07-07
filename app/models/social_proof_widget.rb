@@ -47,6 +47,7 @@ class SocialProofWidget < ApplicationRecord
   attr_json_data_accessor :analytics_data, default: -> { {} }
 
   before_validation :set_defaults, on: :create
+  before_save :unpublish_if_content_changed
 
   def icon_type?
     image_type == "icon"
@@ -171,11 +172,38 @@ class SocialProofWidget < ApplicationRecord
     (clicks.to_f / impressions.to_f * 100).round(2)
   end
 
+  def publish!
+    update!(enabled: true)
+  end
+
   private
     def set_defaults
-      self.enabled = true if enabled.nil?
+      self.enabled = false if enabled.nil?
       self.cta_type ||= "button"
       self.image_type ||= "none"
+    end
+
+    def unpublish_if_content_changed
+      return if new_record?
+      return unless enabled?
+
+      # Define content fields that should trigger unpublishing when changed
+      content_fields = %w[
+        name title description cta_text cta_type image_type
+        custom_image_url icon_name icon_color universal
+      ]
+
+      # Check if any content fields have changed
+      content_changed = content_fields.any? { |field| changed.include?(field) }
+
+      # Check if link associations have changed (for non-universal widgets)
+      links_changed = changed.include?("universal") ||
+                     (respond_to?(:link_ids_changed?) && link_ids_changed?)
+
+      # Unpublish if content or links changed
+      if content_changed || links_changed
+        self.enabled = false
+      end
     end
 
     def template_variables_valid

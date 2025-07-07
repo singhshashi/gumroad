@@ -6,9 +6,6 @@ import { asyncVoid } from "$app/utils/promise";
 import { Button } from "$app/components/Button";
 import { Icon } from "$app/components/Icons";
 
-// Helper to safely cast known-valid icon names from backend
-const toIconName = (iconName: string | undefined): IconName => iconName as IconName;
-
 type SocialProofWidgetData = {
   id: string;
   title?: string;
@@ -17,7 +14,7 @@ type SocialProofWidgetData = {
   cta_type: "button" | "link" | "none";
   image_type: string;
   custom_image_url?: string;
-  icon_name?: string;
+  icon_name?: SocialProofWidgetIconType;
   icon_color?: string;
   product_thumbnail_url?: string;
 };
@@ -132,7 +129,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
             borderColor: "#000000",
           }}
         >
-          <Icon name={toIconName(widget.icon_name)} className="widget-icon__svg" style={{ color: iconColor }} />
+          <Icon name={widget.icon_name} className="widget-icon__svg" style={{ color: iconColor }} />
         </div>
       );
     }

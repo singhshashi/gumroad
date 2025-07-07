@@ -480,6 +480,7 @@ Rails.application.routes.draw do
       resources :social_proof_widgets, only: %i[index show create update destroy] do
         get :paged, on: :collection
         get :analytics, on: :collection
+        post :publish, on: :member
       end
       namespace :upsells do
         resources :products, only: [:index, :show]
