@@ -32,4 +32,8 @@ class Checkout::SocialProofWidgetPolicy < ApplicationPolicy
   def destroy?
     update?
   end
+
+  def duplicate?
+    create? && record.user == seller
+  end
 end

@@ -8,6 +8,7 @@ import {
   updateSocialProofWidget,
   deleteSocialProofWidget,
   publishSocialProofWidget,
+  duplicateSocialProofWidget,
   getPagedSocialProofWidgets,
   SocialProofWidgetPayload,
   SocialProofWidget as SocialProofWidgetType,
@@ -136,11 +137,22 @@ const WidgetActionsPopover = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isDuplicating, setIsDuplicating] = React.useState(false);
   const [confirmingDelete, setConfirmingDelete] = React.useState(false);
 
-  const handleDuplicate = () => {
-    onDuplicate();
-    setOpen(false);
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    try {
+      await duplicateSocialProofWidget(widget.id);
+      showAlert("Widget duplicated successfully", "success");
+      onDuplicate();
+    } catch (e) {
+      assertResponseError(e);
+      showAlert(e.message, "error");
+    } finally {
+      setIsDuplicating(false);
+      setOpen(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -162,9 +174,9 @@ const WidgetActionsPopover = ({
     <>
       <Popover open={open} onToggle={setOpen} aria-label="Open widget action menu" trigger={<Icon name="three-dots" />}>
         <div role="menu">
-          <div role="menuitem" inert={!widget.can_update} onClick={handleDuplicate}>
+          <div role="menuitem" inert={!widget.can_update || isDuplicating} onClick={() => void handleDuplicate()}>
             <Icon name="outline-duplicate" />
-            &ensp;Duplicate
+            &ensp;{isDuplicating ? "Duplicating..." : "Duplicate"}
           </div>
           <div
             className="danger"
@@ -184,10 +196,10 @@ const WidgetActionsPopover = ({
           title="Delete Widget"
           footer={
             <>
-              <Button onClick={() => setConfirmingDelete(false)} disabled={isDeleting}>
+              <Button onClick={() => setConfirmingDelete(false)} disabled={isDeleting || isDuplicating}>
                 Cancel
               </Button>
-              <Button color="danger" onClick={() => void handleDelete()} disabled={isDeleting}>
+              <Button color="danger" onClick={() => void handleDelete()} disabled={isDeleting || isDuplicating}>
                 {isDeleting ? "Deleting..." : "Confirm"}
               </Button>
             </>
@@ -353,8 +365,7 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
                         <WidgetActionsPopover
                           widget={widget}
                           onDuplicate={() => {
-                            setEditingWidget({ ...widget, name: `${widget.name} (copy)` });
-                            setView("create");
+                            loadWidgets(1, searchTerm);
                           }}
                           onDelete={() => {
                             loadWidgets(1, searchTerm);

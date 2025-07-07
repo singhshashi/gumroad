@@ -5,7 +5,7 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
 
   PER_PAGE = 10
 
-  before_action :set_widget, only: [:show, :update, :destroy, :publish]
+  before_action :set_widget, only: [:show, :update, :destroy, :publish, :duplicate]
   before_action :clean_params, only: [:create, :update]
   before_action :remove_enabled_from_update, only: [:update]
 
@@ -21,9 +21,9 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
     authorize [:checkout, SocialProofWidget]
 
     pagination, widgets = fetch_widgets
-    @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
+    @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:, widgets:, pagination:)
 
-    render json: { widgets: widgets.map { @presenter.widget_props(_1) }, pagination: }
+    render json: { widgets: widgets.map { @presenter.widget_props(_1) }, pagination: @presenter.pagination_props }
   end
 
   def show
@@ -83,6 +83,16 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
     @widget.publish!
     @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
     render json: { success: true, widget: @presenter.widget_props(@widget) }
+  rescue => e
+    render json: { success: false, error: e.message }
+  end
+
+  def duplicate
+    authorize [:checkout, @widget]
+
+    duplicated_widget = @widget.duplicate!
+    @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
+    render json: { success: true, widget: @presenter.widget_props(duplicated_widget) }
   rescue => e
     render json: { success: false, error: e.message }
   end

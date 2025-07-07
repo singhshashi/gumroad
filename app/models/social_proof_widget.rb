@@ -176,6 +176,32 @@ class SocialProofWidget < ApplicationRecord
     update!(enabled: true)
   end
 
+  def duplicate!
+    duplicated_widget = self.class.new(
+      user: user,
+      name: "#{name} (copy)",
+      universal: universal,
+      title: title,
+      description: description,
+      cta_text: cta_text,
+      cta_type: cta_type,
+      image_type: image_type,
+      custom_image_url: custom_image_url,
+      icon_name: icon_name,
+      icon_color: icon_color,
+      enabled: false
+    )
+
+    duplicated_widget.save!
+
+    # Copy link associations for non-universal widgets
+    unless universal?
+      duplicated_widget.links = links
+    end
+
+    duplicated_widget
+  end
+
   private
     def set_defaults
       self.enabled = false if enabled.nil?

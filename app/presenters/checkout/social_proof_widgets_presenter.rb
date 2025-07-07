@@ -61,40 +61,38 @@ class Checkout::SocialProofWidgetsPresenter
 
   def widget_analytics_props(widget)
     analytics_data = widget.analytics_data || {}
-    
+
     {
       id: widget.external_id,
       name: widget.name,
       universal: widget.universal?,
-      impressions: analytics_data['impressions'] || 0,
-      clicks: analytics_data['clicks'] || 0,
-      closes: analytics_data['closes'] || 0,
+      impressions: analytics_data["impressions"] || 0,
+      clicks: analytics_data["clicks"] || 0,
+      closes: analytics_data["closes"] || 0,
       conversion_rate: widget.conversion_rate,
       products_count: widget.universal? ? pundit_user.seller.products.visible_and_not_archived.count : widget.links.visible_and_not_archived.count,
       created_at: widget.created_at.iso8601,
     }
   end
 
-  private
-
-  def widget_analytics_summary(widget)
-    analytics_data = widget.analytics_data || {}
-    
-    {
-      impressions: analytics_data['impressions'] || 0,
-      clicks: analytics_data['clicks'] || 0,
-      closes: analytics_data['closes'] || 0,
-      conversion_rate: widget.conversion_rate,
-    }
-  end
-
-
   def pagination_props
     return nil unless pagination
-    
+
     {
       pages: pagination.pages,
       page: pagination.page,
     }
   end
+
+  private
+    def widget_analytics_summary(widget)
+      analytics_data = widget.analytics_data || {}
+
+      {
+        impressions: analytics_data["impressions"] || 0,
+        clicks: analytics_data["clicks"] || 0,
+        closes: analytics_data["closes"] || 0,
+        conversion_rate: widget.conversion_rate,
+      }
+    end
 end

@@ -481,6 +481,7 @@ Rails.application.routes.draw do
         get :paged, on: :collection
         get :analytics, on: :collection
         post :publish, on: :member
+        post :duplicate, on: :member
       end
       namespace :upsells do
         resources :products, only: [:index, :show]
