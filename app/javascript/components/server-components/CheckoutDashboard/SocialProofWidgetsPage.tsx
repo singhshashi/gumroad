@@ -3,6 +3,8 @@ import cx from "classnames";
 import * as React from "react";
 import { createCast } from "ts-safe-cast";
 
+import { SOCIAL_PROOF_TEMPLATE_VARIABLES, getAllowedTemplateVariableKeys } from "$app/constants/socialProofTemplateVariables";
+
 import {
   createSocialProofWidget,
   updateSocialProofWidget,
@@ -67,18 +69,10 @@ type VariableInsertionButtonsProps = {
 };
 
 const VariableInsertionButtons: React.FC<VariableInsertionButtonsProps> = ({ onInsertVariable }) => {
-  const variables = [
-    { key: "country", label: "Country", variable: "{{country}}" },
-    { key: "customer_name", label: "Customer", variable: "{{customer_name}}" },
-    { key: "price", label: "Price", variable: "{{price}}" },
-    { key: "product_name", label: "Product", variable: "{{product_name}}" },
-    { key: "total_sales", label: "Total sales", variable: "{{total_sales}}" },
-    { key: "recent_sale_time", label: "Recent sale", variable: "{{recent_sale_time}}" },
-  ];
 
   return (
     <div style={{ display: "flex", gap: "var(--spacer-2)", marginTop: "var(--spacer-2)", flexWrap: "wrap" }}>
-      {variables.map((item) => (
+      {SOCIAL_PROOF_TEMPLATE_VARIABLES.map((item) => (
         <Button
           key={item.key}
           small
@@ -98,6 +92,7 @@ type Product = {
   url: string;
   thumbnail_url?: string | null;
   sales_count: number;
+  price: string;
 };
 
 type SocialProofWidget = SocialProofWidgetType;
@@ -474,7 +469,7 @@ const WidgetFormModal = ({
     }
 
     // Check for invalid variables
-    const allowedVariables = ["product_name", "price", "total_sales", "country", "customer_name", "recent_sale_time"];
+    const allowedVariables = getAllowedTemplateVariableKeys();
     const variables = (value.match(/\{\{([^}]+)\}\}/gu) || []).map((v) => v.replace(/\{\{|\}\}/gu, "").trim());
     const invalidVariables = variables.filter((v) => !allowedVariables.includes(v));
 
@@ -585,47 +580,58 @@ const WidgetFormModal = ({
   });
 
   const getPreviewProductData = () => {
-    // Use data from the first available product, or fallback to sample data
-    const firstProduct = products[0];
+    // For existing widgets, use the widget's associated products
+    // For new widgets or universal widgets, use the first available product from all products
+    let previewProduct: Product | undefined;
+    
+    if (widget && !formData.universal && widget.products && widget.products.length > 0) {
+      // Use the first product associated with this widget
+      previewProduct = widget.products[0];
+    } else if (!formData.universal && formData.link_ids.length > 0) {
+      // For new widgets with selected products, find the first selected product
+      previewProduct = products.find(p => formData.link_ids.includes(p.id));
+    } else {
+      // Fallback to first product from all products for universal widgets or when no products selected
+      previewProduct = products[0];
+    }
+
+    console.log("Previewing product:", previewProduct);
 
     return {
-      name: firstProduct?.name || "Digital Marketing Course",
-      price: "$29", // Would come from product.cached_default_price_cents formatted
-      sales_count: firstProduct?.sales_count || 1247,
+      name: previewProduct?.name || "Digital Marketing Course",
+      price: previewProduct?.price || "$29", // Use actual product price if available
+      sales_count: previewProduct?.sales_count || 1247,
       country: "United States",
       customer_name: "Sarah M.", // Would be anonymized as "FirstName L." from recent purchase
       recent_sale_time: "2 hours ago", // Would be time_ago_in_words from recent purchase
+      thumbnail_url: previewProduct?.thumbnail_url || "https://via.placeholder.com/48x48/4ecdc4/ffffff?text=📦",
     };
   };
 
   const getPreviewWidgetData = () => {
     // Get the image type and related data
     const imageType = formData.image_type;
-    let customImageUrl = formData.custom_image_url;
-    let productThumbnailUrl = "";
 
-    // Handle different image types
-    if (imageType === "custom_image") {
-      // Use custom image URL if provided, otherwise fallback to placeholder
-      customImageUrl ||= "https://via.placeholder.com/48x48/ff6b6b/ffffff?text=📈";
-    } else if (imageType === "product_thumbnail") {
-      // Use first product's thumbnail or a placeholder
-      const firstProduct = products[0];
-      productThumbnailUrl = firstProduct?.thumbnail_url || "https://via.placeholder.com/48x48/4ecdc4/ffffff?text=📦";
-    }
-
-    const widgetData = {
+    const widgetData: any = {
       id: "preview-widget",
       title: formData.title,
       description: formData.description,
       cta_text: formData.cta_text,
       cta_type: formData.cta_type,
       image_type: imageType,
-      custom_image_url: customImageUrl,
-      icon_name: formData.icon_name,
-      icon_color: formData.icon_color,
-      product_thumbnail_url: productThumbnailUrl,
     };
+
+    // Only include custom_image_url when image_type is "custom_image"
+    if (imageType === "custom_image") {
+      widgetData.custom_image_url =
+        formData.custom_image_url || "https://via.placeholder.com/48x48/ff6b6b/ffffff?text=📈";
+    }
+
+    // Only include icon fields when image_type is "icon"
+    if (imageType === "icon") {
+      widgetData.icon_name = formData.icon_name;
+      widgetData.icon_color = formData.icon_color;
+    }
 
     return widgetData;
   };
@@ -981,8 +987,16 @@ const WidgetFormModal = ({
                     }}
                   >
                     <SocialProofWidget
-                      widget={getPreviewWidgetData()}
-                      productData={getPreviewProductData()}
+                      widget={(() => {
+                        const widgetData = getPreviewWidgetData();
+                        console.log("[WIDGET_PREVIEW] Widget data:", widgetData);
+                        return widgetData;
+                      })()}
+                      productData={(() => {
+                        const productData = getPreviewProductData();
+                        console.log("[WIDGET_PREVIEW] Product data:", productData);
+                        return productData;
+                      })()}
                       disableAnalytics
                       className="preview-mode"
                     />

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require Rails.root.join("app/constants/social_proof_template_variables")
+
 class SocialProofWidget < ApplicationRecord
   include Deletable
   include ExternalId
@@ -25,8 +27,8 @@ class SocialProofWidget < ApplicationRecord
       none
     ]
   }
-  validates :title, length: { maximum: 500 }
-  validates :description, length: { maximum: 1000 }
+  validates :title, presence: true, length: { maximum: 50 }
+  validates :description, presence: true, length: { maximum: 200 }
   validates :cta_text, length: { maximum: 255 }
   validates :icon_name, presence: true, if: :icon_type?
 
@@ -39,7 +41,7 @@ class SocialProofWidget < ApplicationRecord
   scope :alive, -> { where(deleted_at: nil) }
   scope :universal, -> { where(universal: true) }
   scope :product_specific, -> { where(universal: false) }
-  scope :enabled_widgets, -> { alive.is_enabled }
+  scope :enabled_widgets, -> { alive.enabled }
 
   attr_json_data_accessor :custom_image_url, default: -> { nil }
   attr_json_data_accessor :icon_name, default: -> { nil }
@@ -106,7 +108,7 @@ class SocialProofWidget < ApplicationRecord
     # Product-specific data
     context = {
       product_name: product.name,
-      price: Money.new(product.cached_default_price_cents, product.price_currency_type || "USD").format,
+      price: Money.new(product.default_price_cents, product.price_currency_type || "USD").format,
       total_sales: product.successful_sales_count.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
     }
 
@@ -233,7 +235,7 @@ class SocialProofWidget < ApplicationRecord
     end
 
     def template_variables_valid
-      allowed_variables = %w[product_name price total_sales country customer_name recent_sale_time]
+      allowed_variables = SocialProofTemplateVariables::ALLOWED_VARIABLES
       template_fields = [title, description, cta_text].compact
 
       template_fields.each do |field|

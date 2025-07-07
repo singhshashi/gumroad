@@ -23,6 +23,7 @@ class Checkout::SocialProofWidgetsPresenter
           url: product.long_url,
           thumbnail_url: product.thumbnail_or_cover_url,
           sales_count: product.successful_sales_count,
+          price: Money.new(product.default_price_cents, product.price_currency_type || "USD").format,
         }
       end,
     }
@@ -53,6 +54,7 @@ class Checkout::SocialProofWidgetsPresenter
           url: product.long_url,
           thumbnail_url: product.thumbnail_or_cover_url,
           sales_count: product.successful_sales_count,
+          price: Money.new(product.default_price_cents, product.price_currency_type || "USD").format,
         }
       end,
       analytics: widget_analytics_summary(widget),

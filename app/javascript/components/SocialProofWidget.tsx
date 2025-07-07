@@ -6,17 +6,17 @@ import { asyncVoid } from "$app/utils/promise";
 import { Button } from "$app/components/Button";
 import { Icon } from "$app/components/Icons";
 
-type SocialProofWidgetData = {
+export type SocialProofWidgetData = {
   id: string;
-  title?: string;
-  description?: string;
-  cta_text?: string;
+  title: string;              // Required field (max 50 chars)
+  description: string;        // Required field (max 200 chars)
+  cta_text: string | null;    // Can be null when cta_type is "none"
   cta_type: "button" | "link" | "none";
   image_type: string;
-  custom_image_url?: string;
-  icon_name?: SocialProofWidgetIconType;
-  icon_color?: string;
-  product_thumbnail_url?: string;
+  custom_image_url?: string;   // Only when image_type is "custom_image"
+  icon_name?: SocialProofWidgetIconType;  // Only when image_type is "icon"
+  icon_color?: string;         // Only when image_type is "icon"
+  // product_thumbnail_url removed - get from product data
 };
 
 type SocialProofWidgetProps = {
@@ -29,6 +29,7 @@ type SocialProofWidgetProps = {
         country: string;
         customer_name?: string;
         recent_sale_time?: string;
+        thumbnail_url?: string;
       }
     | undefined;
   onAction?: (() => void) | undefined;
@@ -97,7 +98,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
     return {
       title: processTemplate(widget.title),
       description: processTemplate(widget.description),
-      cta_text: processTemplate(widget.cta_text),
+      cta_text: processTemplate(widget.cta_text || undefined),
     };
   }, [widget, productData]);
 
@@ -106,8 +107,8 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
       return <img src={widget.custom_image_url} alt="" className="widget-image" />;
     }
 
-    if (widget.image_type === "product_thumbnail" && widget.product_thumbnail_url) {
-      return <img src={widget.product_thumbnail_url} alt="" className="widget-image" />;
+    if (widget.image_type === "product_thumbnail" && productData?.thumbnail_url) {
+      return <img src={productData.thumbnail_url} alt="" className="widget-image" />;
     }
 
     if (widget.image_type === "icon" && widget.icon_name) {
@@ -256,6 +257,7 @@ export const SocialProofWidgetContainer: React.FC<{
     country: string;
     customer_name?: string;
     recent_sale_time?: string;
+    thumbnail_url?: string;
   };
   onAction?: (() => void) | undefined;
 }> = ({ widgets, productData, onAction }) => {
