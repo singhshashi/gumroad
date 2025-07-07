@@ -16,12 +16,9 @@ class CreateSocialProofWidgets < ActiveRecord::Migration[7.1]
       t.integer :flags, default: 0
       t.text :json_data
       
-      t.string :external_id, null: false, limit: 191
       t.datetime :deleted_at
       
       t.timestamps
-      
-      t.index :external_id, unique: true
       t.index [:user_id, :universal]
       t.index :deleted_at
     end

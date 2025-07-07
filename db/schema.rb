@@ -2086,12 +2086,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_26_103026) do
     t.string "image_type", default: "product_thumbnail", null: false
     t.integer "flags", default: 0
     t.text "json_data"
-    t.string "external_id", limit: 191, null: false
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["deleted_at"], name: "index_social_proof_widgets_on_deleted_at"
-    t.index ["external_id"], name: "index_social_proof_widgets_on_external_id", unique: true
     t.index ["user_id", "universal"], name: "index_social_proof_widgets_on_user_id_and_universal"
     t.index ["user_id"], name: "index_social_proof_widgets_on_user_id"
   end
