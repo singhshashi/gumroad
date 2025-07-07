@@ -54,6 +54,7 @@ import { Review as ReviewComponent } from "$app/components/Review";
 import { ReviewForm, Review as FormReview } from "$app/components/ReviewForm";
 import { useRichTextEditor } from "$app/components/RichTextEditor";
 import { showAlert } from "$app/components/server-components/Alert";
+import { SocialProofWidgetContainer, SocialProofWidgetData } from "$app/components/SocialProofWidget";
 import { PublicFileEmbed } from "$app/components/TiptapExtensions/PublicFileEmbed";
 import { ReviewCard } from "$app/components/TiptapExtensions/ReviewCard";
 import { UpsellCard } from "$app/components/TiptapExtensions/UpsellCard";
@@ -136,6 +137,7 @@ export type Product = {
   }[];
   public_files: PublicFile[];
   audio_previews_enabled: boolean;
+  social_proof_widgets?: SocialProofWidgetData[];
 };
 export type Purchase = {
   id: string;
@@ -592,6 +594,22 @@ export const Product = ({
         </section>
         {product.ratings ? <Reviews ratings={product.ratings} productId={product.id} seller={product.seller} /> : null}
       </section>
+      {product.social_proof_widgets && product.social_proof_widgets.length > 0 ? (
+        <SocialProofWidgetContainer
+          widgets={product.social_proof_widgets}
+          productData={{
+            name: product.name,
+            price: formatPriceCentsWithCurrencySymbol(product.currency_code, priceCents, { symbolFormat: "long" }),
+            sales_count: product.sales_count || 0,
+            country: "United States",
+            customer_name: "Someone",
+            recent_sale_time: "recently",
+          }}
+          onAction={() => {
+            ctaButtonRef?.current?.click();
+          }}
+        />
+      ) : null}
     </article>
   );
 };

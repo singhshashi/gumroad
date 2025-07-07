@@ -67,13 +67,16 @@ class ProductPresenter::ProductProps
         bundle_products: product.bundle_products.in_order.includes(:product, :variant).alive.map { bundle_product_props(_1, request:, recommended_by:, layout:) },
         public_files: product.alive_public_files.attached.map { PublicFilePresenter.new(public_file: _1).props },
         audio_previews_enabled: Feature.active?(:audio_previews, product.user),
+        social_proof_widgets: social_proof_widgets_props,
       },
       discount_code: discount_code_props(discount_code, quantity),
       purchase: purchase_props(product.purchase_info_for_product_page(pundit_user&.user, request.cookie_jar[:_gumroad_guid])),
       wishlists: pundit_user&.seller.present? ? (
         pundit_user.seller.wishlists.alive.includes(:alive_wishlist_products).map { |wishlist| WishlistPresenter.new(wishlist:).listing_props(product:) }
       ) : [],
-    }
+    }.tap do |props|
+      Rails.logger.info "[SOCIAL_PROOF_WIDGETS] Final props includes social_proof_widgets: #{props[:social_proof_widgets]&.length || 0} widgets"
+    end
   end
 
   private
@@ -169,6 +172,43 @@ class ProductPresenter::ProductProps
         }
       else
         nil
+      end
+    end
+
+    def social_proof_widgets_props
+      return [] unless product.user.social_proof_widgets.exists?
+
+      widgets = product.user.social_proof_widgets.enabled_widgets
+      universal_widgets = widgets.universal
+      product_specific_widgets = widgets.product_specific.joins(:links).where(links: { id: product.id })
+
+      selected_widgets = product_specific_widgets.any? ? product_specific_widgets : universal_widgets.limit(1)
+
+      Rails.logger.info "[SOCIAL_PROOF_WIDGETS] Product #{product.id} (#{product.name}) - Selected #{selected_widgets.count} widgets: #{selected_widgets.map(&:name).join(', ')}"
+
+      selected_widgets.map do |widget|
+        processed_content = widget.process_template_strings(widget.template_context_for_product(product))
+        widget_data = {
+          id: widget.external_id,
+          title: processed_content[:title],
+          description: processed_content[:description],
+          cta_text: processed_content[:cta_text],
+          cta_type: widget.cta_type,
+          image_type: widget.image_type,
+        }
+
+        # Only include custom_image_url when image_type is "custom_image"
+        if widget.image_type == "custom_image" && widget.custom_image_url.present?
+          widget_data[:custom_image_url] = widget.custom_image_url
+        end
+
+        # Only include icon fields when image_type is "icon"
+        if widget.image_type == "icon"
+          widget_data[:icon_name] = widget.icon_name if widget.icon_name.present?
+          widget_data[:icon_color] = widget.icon_color if widget.icon_color.present?
+        end
+
+        widget_data
       end
     end
 end

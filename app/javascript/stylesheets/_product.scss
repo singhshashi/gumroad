@@ -338,3 +338,163 @@ article {
     }
   }
 }
+
+// Social Proof Widget Styles for Product Pages
+.social-proof-widget-container {
+  // Mobile first - inline positioning
+  position: relative;
+  max-width: 100%;
+  margin-top: spacer(4);
+  padding: 0 spacer(3);
+
+  // Desktop - fixed positioning
+  @include breakpoint-up(lg) {
+    position: fixed;
+    bottom: spacer(4);
+    left: spacer(4);
+    z-index: 1000;
+    max-width: size(24);
+    margin-top: 0;
+    padding: 0;
+  }
+}
+
+.social-proof-widget {
+  @include bg-color(filled);
+  border: $border;
+  padding: spacer(4);
+  
+  // Smooth animation entrance
+  animation: slideInFromBottom 0.5s ease-out;
+  
+  // Mobile styles (default)
+  box-shadow: box-shadow(1);
+  border-radius: border-radius(1);
+  margin-bottom: 0;
+
+  // Desktop styles
+  @include breakpoint-up(lg) {
+    box-shadow: box-shadow(2);
+    border-radius: border-radius(2);
+    margin-bottom: spacer(3);
+  }
+
+  &__close {
+    position: absolute;
+    top: spacer(2);
+    right: spacer(2);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: spacer(1);
+    @include text-muted;
+    @include transition(color);
+
+    &:hover {
+      color: full-color(color);
+    }
+  }
+
+  &__content {
+    display: flex;
+    align-items: flex-start;
+    gap: spacer(3);
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    @include font-size(2);
+    font-weight: 600;
+    margin: 0 0 spacer(2) 0;
+    color: full-color(color);
+  }
+
+  &__description {
+    @include font-size(1);
+    @include text-muted;
+    margin: 0 0 spacer(3) 0;
+    line-height: 1.4;
+  }
+
+  &--with-image {
+    .social-proof-widget__content {
+      align-items: center;
+    }
+  }
+
+  // Image styles
+  .widget-image {
+    width: size(3);
+    height: size(3);
+    border-radius: border-radius(1);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .widget-icon {
+    width: size(3);
+    height: size(3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+
+    &--custom-color {
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    &__svg {
+      width: size(1.5);
+      height: size(1.5);
+    }
+  }
+
+  // CTA button styles
+  .widget-cta-button {
+    @include font-size(1);
+    padding: spacer(2) spacer(3);
+  }
+
+  .widget-cta-link {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    @include font-size(1);
+    font-weight: 600;
+    cursor: pointer;
+    @include transition(color);
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+// Animation keyframes
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// Preview mode styling (for widget creation page)
+.social-proof-widget.preview-mode {
+  position: relative;
+  margin: 0;
+  animation: none;
+  
+  .social-proof-widget__close {
+    display: none;
+  }
+}

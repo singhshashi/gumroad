@@ -34,7 +34,7 @@ import { Preview } from "$app/components/Preview";
 import { ImageUploadSettingsContext } from "$app/components/RichTextEditor";
 import { Select } from "$app/components/Select";
 import { showAlert } from "$app/components/server-components/Alert";
-import { SocialProofWidget } from "$app/components/SocialProofWidget";
+import { SocialProofWidget, SocialProofWidgetData } from "$app/components/SocialProofWidget";
 import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
 
 import placeholder from "$assets/images/placeholders/social_widgets.png";
@@ -609,7 +609,7 @@ const WidgetFormModal = ({
     // Get the image type and related data
     const imageType = formData.image_type;
 
-    const widgetData: Partial<SocialProofWidget> = {
+    const widgetData: SocialProofWidgetData = {
       id: "preview-widget",
       title: formData.title,
       description: formData.description,
