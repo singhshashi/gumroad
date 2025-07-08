@@ -536,7 +536,7 @@ const WidgetFormModal = ({
         cta_type: formData.cta_type,
         image_type: formData.image_type,
         enabled: formData.enabled,
-        link_ids: formData.link_ids,
+        link_ids: formData.universal ? [] : formData.link_ids,
         ...(formData.image_type === "custom_image" &&
           formData.custom_image_url && { custom_image_url: formData.custom_image_url }),
         ...(formData.image_type === "icon" && { icon_name: formData.icon_name }),
@@ -576,7 +576,7 @@ const WidgetFormModal = ({
         cta_type: formData.cta_type,
         image_type: formData.image_type,
         enabled: formData.enabled,
-        link_ids: formData.link_ids,
+        link_ids: formData.universal ? [] : formData.link_ids,
         ...(formData.image_type === "custom_image" &&
           formData.custom_image_url && { custom_image_url: formData.custom_image_url }),
         ...(formData.image_type === "icon" && { icon_name: formData.icon_name }),

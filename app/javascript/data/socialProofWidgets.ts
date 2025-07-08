@@ -42,7 +42,7 @@ export type SocialProofWidget = {
     thumbnail_url?: string | null;
     sales_count: number;
     price: string;
-  }[];
+  }[] | null;
   analytics: {
     impressions: number;
     clicks: number;
