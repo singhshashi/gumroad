@@ -251,36 +251,20 @@ export const SocialProofWidgetContainer: React.FC<{
   };
   onAction?: (() => void) | undefined;
 }> = ({ widgets, productData, onAction }) => {
-  const [currentWidgetIndex, setCurrentWidgetIndex] = React.useState(0);
-  const [displayedWidgets, setDisplayedWidgets] = React.useState<string[]>([]);
+  const [selectedWidget] = React.useState(() => {
+    if (widgets.length === 0) return null;
+    // the structure allows for multiple widgets to be passed to the client
+    // so we can randomly select one or change the implementation as per future needs
+    // Right now we are always sending only one widget in the array 
+    return widgets[Math.floor(Math.random() * widgets.length)];
+  });
 
-  // Show only one widget at a time, cycling through them
-  const currentWidget = widgets[currentWidgetIndex];
-
-  React.useEffect(() => {
-    if (widgets.length === 0 || !currentWidget) return;
-
-    // Show the first widget immediately
-    if (!displayedWidgets.includes(currentWidget.id)) {
-      setDisplayedWidgets((prev) => [...prev, currentWidget.id]);
-    }
-
-    // If there are multiple widgets, cycle through them
-    if (widgets.length > 1) {
-      const timer = setTimeout(() => {
-        setCurrentWidgetIndex((prev) => (prev + 1) % widgets.length);
-      }, 10000); // Show each widget for 10 seconds
-
-      return () => clearTimeout(timer);
-    }
-  }, [currentWidgetIndex, widgets, currentWidget?.id, displayedWidgets]);
-
-  if (widgets.length === 0 || !currentWidget) return null;
+  if (widgets.length === 0 || !selectedWidget) return null;
 
   return (
     <div className="social-proof-widget-container">
       <SocialProofWidget
-        widget={currentWidget}
+        widget={selectedWidget}
         productData={productData}
         onAction={onAction}
         disableAnalytics={false}

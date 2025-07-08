@@ -182,9 +182,11 @@ class ProductPresenter::ProductProps
       universal_widgets = widgets.universal
       product_specific_widgets = widgets.product_specific.joins(:links).where(links: { id: product.id })
 
-      selected_widgets = product_specific_widgets.any? ? product_specific_widgets : universal_widgets.limit(1)
+      # Get union of both universal and product-specific widgets, then randomly select one
+      all_available_widgets = (universal_widgets.to_a + product_specific_widgets.to_a).uniq
+      selected_widgets = all_available_widgets.any? ? [all_available_widgets.sample] : []
 
-      Rails.logger.info "[SOCIAL_PROOF_WIDGETS] Product #{product.id} (#{product.name}) - Selected #{selected_widgets.count} widgets: #{selected_widgets.map(&:name).join(', ')}"
+      Rails.logger.info "[SOCIAL_PROOF_WIDGETS] Product #{product.id} (#{product.name}) - Available widgets: #{all_available_widgets.count} (#{all_available_widgets.map(&:name).join(', ')}) - Selected: #{selected_widgets.count} (#{selected_widgets.map(&:name).join(', ')})"
 
       selected_widgets.map do |widget|
         processed_content = widget.process_template_strings(widget.template_context_for_product(product))
