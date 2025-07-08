@@ -1,7 +1,7 @@
 import cx from "classnames";
 import * as React from "react";
 
-import { asyncVoid } from "$app/utils/promise";
+import { request } from "$app/utils/request";
 
 import { Button } from "$app/components/Button";
 import { Icon } from "$app/components/Icons";
@@ -47,26 +47,28 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
   const [isVisible, setIsVisible] = React.useState(true);
   const [hasAnimated, setHasAnimated] = React.useState(false);
   const widgetRef = React.useRef<HTMLDivElement>(null);
+  const impressionTrackedRef = React.useRef(false);
 
   // Track analytics
   React.useEffect(() => {
-    if (isVisible && !hasAnimated && !disableAnalytics) {
+    if (isVisible && !hasAnimated && !disableAnalytics && !impressionTrackedRef.current) {
       setHasAnimated(true);
+      impressionTrackedRef.current = true;
       // Track impression
-      trackWidgetImpression(widget.id);
+      void trackWidgetImpression(widget.id);
     }
   }, [isVisible, hasAnimated, widget.id, disableAnalytics]);
 
   const handleClose = () => {
     if (!disableAnalytics) {
-      trackWidgetClose(widget.id);
+      void trackWidgetClose(widget.id);
     }
     setIsVisible(false);
   };
 
   const handleAction = () => {
     if (!disableAnalytics) {
-      trackWidgetClick(widget.id);
+      void trackWidgetClick(widget.id);
     }
     onAction?.();
   };
@@ -199,52 +201,40 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
 };
 
 // Analytics tracking functions
-const trackWidgetImpression = (widgetId: string) => {
-  asyncVoid(async () => {
-    try {
-      await fetch(`/internal/social_proof_widgets/${widgetId}/impression`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || "",
-        },
-      });
-    } catch (_error) {
-      // Track error silently - don't block user experience
-    }
-  });
+const trackWidgetImpression = async (widgetId: string) => {
+  try {
+    await request({
+      method: "POST",
+      url: `/social_proof_widgets/${widgetId}/impression`,
+      accept: "json",
+    });
+  } catch (_error) {
+    // Track error silently - don't block user experience
+  }
 };
 
-const trackWidgetClick = (widgetId: string) => {
-  asyncVoid(async () => {
-    try {
-      await fetch(`/internal/social_proof_widgets/${widgetId}/click`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || "",
-        },
-      });
-    } catch (_error) {
-      // Track error silently - don't block user experience
-    }
-  });
+const trackWidgetClick = async (widgetId: string) => {
+  try {
+    await request({
+      method: "POST",
+      url: `/social_proof_widgets/${widgetId}/click`,
+      accept: "json",
+    });
+  } catch (_error) {
+    // Track error silently - don't block user experience
+  }
 };
 
-const trackWidgetClose = (widgetId: string) => {
-  asyncVoid(async () => {
-    try {
-      await fetch(`/internal/social_proof_widgets/${widgetId}/close`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || "",
-        },
-      });
-    } catch (_error) {
-      // Track error silently - don't block user experience
-    }
-  });
+const trackWidgetClose = async (widgetId: string) => {
+  try {
+    await request({
+      method: "POST",
+      url: `/social_proof_widgets/${widgetId}/close`,
+      accept: "json",
+    });
+  } catch (_error) {
+    // Track error silently - don't block user experience
+  }
 };
 
 // Container component for multiple widgets with display logic

@@ -86,6 +86,20 @@ Rails.application.routes.draw do
         end
       end
     end
+    
+    resources :social_proof_widgets, only: [] do
+      member do
+        if named_routes
+          post :impression, as: :impression
+          post :click, as: :click
+          post :close, as: :close
+        else
+          post :impression
+          post :click
+          post :close
+        end
+      end
+    end
   end
 
   def product_info_and_purchase_routes(named_routes: true)
@@ -921,13 +935,6 @@ Rails.application.routes.draw do
           collection do
             resource :unique_permalink, only: [:show], controller: "utm_links/unique_permalinks", as: :utm_link_unique_permalink
             resources :stats, only: [:index], controller: "utm_links/stats", as: :utm_links_stats
-          end
-        end
-        resources :social_proof_widgets, only: [] do
-          member do
-            post :impression
-            post :click
-            post :close
           end
         end
         resources :product_public_files, only: [:create]

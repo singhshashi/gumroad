@@ -539,8 +539,8 @@ const WidgetFormModal = ({
         link_ids: formData.link_ids,
         ...(formData.image_type === "custom_image" &&
           formData.custom_image_url && { custom_image_url: formData.custom_image_url }),
-        ...(formData.image_type === "icon" && formData.icon_name && { icon_name: formData.icon_name }),
-        ...(formData.image_type === "icon" && formData.icon_color && { icon_color: formData.icon_color }),
+        ...(formData.image_type === "icon" && { icon_name: formData.icon_name }),
+        ...(formData.image_type === "icon" && { icon_color: formData.icon_color }),
       };
 
       if (widget) {
@@ -579,8 +579,8 @@ const WidgetFormModal = ({
         link_ids: formData.link_ids,
         ...(formData.image_type === "custom_image" &&
           formData.custom_image_url && { custom_image_url: formData.custom_image_url }),
-        ...(formData.image_type === "icon" && formData.icon_name && { icon_name: formData.icon_name }),
-        ...(formData.image_type === "icon" && formData.icon_color && { icon_color: formData.icon_color }),
+        ...(formData.image_type === "icon" && { icon_name: formData.icon_name }),
+        ...(formData.image_type === "icon" && { icon_color: formData.icon_color }),
       };
 
       let widgetId: string;
@@ -1080,7 +1080,6 @@ const WidgetDrawer = ({
     }
   });
 
-
   return (
     <aside style={{ width: "30%", minWidth: "450px" }}>
       <header>
@@ -1088,34 +1087,86 @@ const WidgetDrawer = ({
         <button className="close" aria-label="Close" onClick={onClose} />
       </header>
 
-      <section style={{ display: "grid", gridTemplateColumns: "1fr", gridTemplateRows: "auto auto", gap: "var(--spacer-5)" }}>
+      <section
+        style={{ display: "grid", gridTemplateColumns: "1fr", gridTemplateRows: "auto auto", gap: "var(--spacer-5)" }}
+      >
         <section style={{ border: "var(--border)", borderRadius: "var(--border-radius)" }}>
           <div>
-            <div style={{ padding: "var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-3)" }}>
+            <div
+              style={{
+                padding: "var(--spacer-3)",
+                paddingBottom: "var(--spacer-2)",
+                borderBottom: "var(--border)",
+                marginBottom: "var(--spacer-3)",
+              }}
+            >
               <h3 style={{ margin: 0 }}>Details</h3>
             </div>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-2)" }}>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "0 var(--spacer-3)",
+                paddingBottom: "var(--spacer-2)",
+                borderBottom: "var(--border)",
+                marginBottom: "var(--spacer-2)",
+              }}
+            >
               <div>Impressions:</div>
               <div>{widget.analytics.impressions.toLocaleString()}</div>
             </div>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-2)" }}>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "0 var(--spacer-3)",
+                paddingBottom: "var(--spacer-2)",
+                borderBottom: "var(--border)",
+                marginBottom: "var(--spacer-2)",
+              }}
+            >
               <div>Clicks:</div>
               <div>{widget.analytics.clicks.toLocaleString()}</div>
             </div>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-2)" }}>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "0 var(--spacer-3)",
+                paddingBottom: "var(--spacer-2)",
+                borderBottom: "var(--border)",
+                marginBottom: "var(--spacer-2)",
+              }}
+            >
               <div>Closes:</div>
               <div>{widget.analytics.closes.toLocaleString()}</div>
             </div>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-2)" }}>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "0 var(--spacer-3)",
+                paddingBottom: "var(--spacer-2)",
+                borderBottom: "var(--border)",
+                marginBottom: "var(--spacer-2)",
+              }}
+            >
               <div>Conversion:</div>
               <div>{widget.analytics.conversion_rate}%</div>
             </div>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)" }}>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "0 var(--spacer-3)",
+                paddingBottom: "var(--spacer-2)",
+              }}
+            >
               <div>Revenue:</div>
               <div>$0</div>
             </div>
@@ -1123,7 +1174,14 @@ const WidgetDrawer = ({
         </section>
 
         <section style={{ border: "var(--border)", borderRadius: "var(--border-radius)" }}>
-          <div style={{ padding: "var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-3)" }}>
+          <div
+            style={{
+              padding: "var(--spacer-3)",
+              paddingBottom: "var(--spacer-2)",
+              borderBottom: "var(--border)",
+              marginBottom: "var(--spacer-3)",
+            }}
+          >
             <h3 style={{ margin: 0 }}>Products</h3>
           </div>
           <div style={{ padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-3)" }}>
