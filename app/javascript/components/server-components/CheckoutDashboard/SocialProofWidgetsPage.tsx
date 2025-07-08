@@ -216,6 +216,7 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
   const [isSearchPopoverOpen, setIsSearchPopoverOpen] = React.useState(false);
   const [view, setView] = React.useState<"list" | "create" | "edit">("list");
   const [editingWidget, setEditingWidget] = React.useState<SocialProofWidget | null>(null);
+  const [selectedWidgetId, setSelectedWidgetId] = React.useState<string | null>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const activeRequest = React.useRef<{ cancel: () => void } | null>(null);
@@ -242,6 +243,8 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
     setEditingWidget(null);
     setView("create");
   };
+
+  const selectedWidget = selectedWidgetId ? widgetsList.find((w) => w.id === selectedWidgetId) : null;
 
   return view === "list" ? (
     <Layout
@@ -320,7 +323,12 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
               </thead>
               <tbody>
                 {widgetsList.map((widget) => (
-                  <tr key={widget.id}>
+                  <tr
+                    key={widget.id}
+                    onClick={() => setSelectedWidgetId(widget.id)}
+                    style={{ cursor: "pointer" }}
+                    className={selectedWidgetId === widget.id ? "selected" : ""}
+                  >
                     <td style={{ width: "40%" }}>
                       <div>
                         <div>
@@ -377,6 +385,24 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
             ) : null}
           </>
         )}
+
+        {selectedWidget ? (
+          <WidgetDrawer
+            widget={selectedWidget}
+            onClose={() => setSelectedWidgetId(null)}
+            onEdit={() => {
+              setEditingWidget(selectedWidget);
+              setView("edit");
+            }}
+            onDuplicate={() => {
+              loadWidgets(1, searchTerm);
+            }}
+            onDelete={() => {
+              setSelectedWidgetId(null);
+              loadWidgets(1, searchTerm);
+            }}
+          />
+        ) : null}
       </section>
     </Layout>
   ) : (
@@ -1008,6 +1034,137 @@ const WidgetFormModal = ({
         </aside>
       </div>
     </ImageUploadSettingsContext.Provider>
+  );
+};
+
+// Widget Drawer Component
+const WidgetDrawer = ({
+  widget,
+  onClose,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}: {
+  widget: SocialProofWidget;
+  onClose: () => void;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) => {
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isDuplicating, setIsDuplicating] = React.useState(false);
+
+  const handleDuplicate = asyncVoid(async () => {
+    try {
+      setIsDuplicating(true);
+      await duplicateSocialProofWidget(widget.id);
+      onDuplicate();
+      setIsDuplicating(false);
+    } catch (e) {
+      assertResponseError(e);
+      showAlert(e.message, "error");
+      setIsDuplicating(false);
+    }
+  });
+
+  const handleDelete = asyncVoid(async () => {
+    try {
+      setIsDeleting(true);
+      await deleteSocialProofWidget(widget.id);
+      onDelete();
+      setIsDeleting(false);
+    } catch (e) {
+      assertResponseError(e);
+      showAlert(e.message, "error");
+      setIsDeleting(false);
+    }
+  });
+
+
+  return (
+    <aside style={{ width: "30%", minWidth: "450px" }}>
+      <header>
+        <h2>{widget.name}</h2>
+        <button className="close" aria-label="Close" onClick={onClose} />
+      </header>
+
+      <section style={{ display: "grid", gridTemplateColumns: "1fr", gridTemplateRows: "auto auto", gap: "var(--spacer-5)" }}>
+        <section style={{ border: "var(--border)", borderRadius: "var(--border-radius)" }}>
+          <div>
+            <div style={{ padding: "var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-3)" }}>
+              <h3 style={{ margin: 0 }}>Details</h3>
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-2)" }}>
+              <div>Impressions:</div>
+              <div>{widget.analytics.impressions.toLocaleString()}</div>
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-2)" }}>
+              <div>Clicks:</div>
+              <div>{widget.analytics.clicks.toLocaleString()}</div>
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-2)" }}>
+              <div>Closes:</div>
+              <div>{widget.analytics.closes.toLocaleString()}</div>
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-2)" }}>
+              <div>Conversion:</div>
+              <div>{widget.analytics.conversion_rate}%</div>
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-2)" }}>
+              <div>Revenue:</div>
+              <div>$0</div>
+            </div>
+          </div>
+        </section>
+
+        <section style={{ border: "var(--border)", borderRadius: "var(--border-radius)" }}>
+          <div style={{ padding: "var(--spacer-3)", paddingBottom: "var(--spacer-2)", borderBottom: "var(--border)", marginBottom: "var(--spacer-3)" }}>
+            <h3 style={{ margin: 0 }}>Products</h3>
+          </div>
+          <div style={{ padding: "0 var(--spacer-3)", paddingBottom: "var(--spacer-3)" }}>
+            {widget.universal ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "var(--spacer-2)" }}>
+                <Icon name="globe" />
+                <span>This widget appears on all your products</span>
+              </div>
+            ) : (
+              <div>
+                {widget.products && widget.products.length > 0 ? (
+                  <div>
+                    {widget.products.map((product) => (
+                      <div key={product.id} style={{ marginBottom: "var(--spacer-1)" }}>
+                        <strong>{product.name}</strong>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: "var(--text-muted)", margin: 0 }}>No products selected</p>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      </section>
+
+      <section style={{ marginTop: "auto", paddingTop: "var(--spacer-4)" }}>
+        <div className="button-group" style={{ display: "flex", gap: "var(--spacer-2)" }}>
+          <Button onClick={onEdit} disabled={!widget.can_update} style={{ flex: 1 }}>
+            Edit
+          </Button>
+          <Button onClick={handleDuplicate} disabled={isDuplicating} style={{ flex: 1 }}>
+            {isDuplicating ? "Duplicating..." : "Duplicate"}
+          </Button>
+          <Button onClick={handleDelete} disabled={isDeleting} color="danger" style={{ flex: 1 }}>
+            {isDeleting ? "Deleting..." : "Delete"}
+          </Button>
+        </div>
+      </section>
+    </aside>
   );
 };
 

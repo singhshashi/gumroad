@@ -289,7 +289,12 @@ export const SocialProofWidgetContainer: React.FC<{
 
   return (
     <div className="social-proof-widget-container">
-      <SocialProofWidget widget={currentWidget} productData={productData} onAction={onAction} />
+      <SocialProofWidget
+        widget={currentWidget}
+        productData={productData}
+        onAction={onAction}
+        disableAnalytics={false}
+      />
     </div>
   );
 };
