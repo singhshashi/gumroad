@@ -601,7 +601,7 @@ export const Product = ({
             product.social_proof_widgets[0]?.product_data || {
               sales_count: product.sales_count || 0,
               members_count: 0,
-              thumbnail_url: product.covers[0]?.thumbnail_url || null,
+              ...(product.covers[0]?.thumbnail && { thumbnail_url: product.covers[0].thumbnail }),
             }
           }
           onAction={() => {
