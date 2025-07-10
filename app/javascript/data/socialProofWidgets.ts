@@ -7,8 +7,10 @@ import { PaginationProps } from "$app/components/Pagination";
 export type SocialProofWidgetPayload = {
   name: string;
   universal: boolean;
+  widget_type: "purchases" | "memberships";
   title: string;
-  description: string;
+  message_start: string;
+  message_end: string;
   cta_text: string;
   cta_type: "button" | "link" | "none";
   image_type: "product_thumbnail" | "custom_image" | "icon" | "none";
@@ -25,8 +27,10 @@ export type SocialProofWidget = {
   can_destroy: boolean;
   name: string;
   universal: boolean;
+  widget_type: "purchases" | "memberships";
   title: string;
-  description: string;
+  message_start: string;
+  message_end: string;
   cta_text: string;
   cta_type: "button" | "link" | "none";
   image_type: "product_thumbnail" | "custom_image" | "icon" | "none";
@@ -34,15 +38,16 @@ export type SocialProofWidget = {
   icon_name?: SocialProofWidgetIconType | null;
   icon_color?: string | null;
   enabled: boolean;
-  //TODO: Add other variables that we have defined
-  products?: {
-    id: string;
-    name: string;
-    url: string;
-    thumbnail_url?: string | null;
-    sales_count: number;
-    price: string;
-  }[] | null;
+  products?:
+    | {
+        id: string;
+        name: string;
+        url: string;
+        thumbnail_url?: string | null;
+        sales_count: number;
+        price: string;
+      }[]
+    | null;
   analytics: {
     impressions: number;
     clicks: number;
@@ -60,8 +65,10 @@ export const createSocialProofWidget = async (payload: SocialProofWidgetPayload)
       social_proof_widget: {
         name: payload.name,
         universal: payload.universal,
+        widget_type: payload.widget_type,
         title: payload.title,
-        description: payload.description,
+        message_start: payload.message_start,
+        message_end: payload.message_end,
         cta_text: payload.cta_text,
         cta_type: payload.cta_type,
         image_type: payload.image_type,
@@ -92,8 +99,10 @@ export const updateSocialProofWidget = async (id: string, payload: SocialProofWi
       social_proof_widget: {
         name: payload.name,
         universal: payload.universal,
+        widget_type: payload.widget_type,
         title: payload.title,
-        description: payload.description,
+        message_start: payload.message_start,
+        message_end: payload.message_end,
         cta_text: payload.cta_text,
         cta_type: payload.cta_type,
         image_type: payload.image_type,

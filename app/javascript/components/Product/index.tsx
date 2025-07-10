@@ -597,14 +597,13 @@ export const Product = ({
       {product.social_proof_widgets && product.social_proof_widgets.length > 0 ? (
         <SocialProofWidgetContainer
           widgets={product.social_proof_widgets}
-          productData={{
-            name: product.name,
-            price: formatPriceCentsWithCurrencySymbol(product.currency_code, priceCents, { symbolFormat: "long" }),
-            sales_count: product.sales_count || 0,
-            country: "United States",
-            customer_name: "Someone",
-            recent_sale_time: "recently",
-          }}
+          productData={
+            product.social_proof_widgets[0]?.product_data || {
+              sales_count: product.sales_count || 0,
+              members_count: 0,
+              thumbnail_url: product.covers[0]?.thumbnail_url || null,
+            }
+          }
           onAction={() => {
             ctaButtonRef?.current?.click();
           }}

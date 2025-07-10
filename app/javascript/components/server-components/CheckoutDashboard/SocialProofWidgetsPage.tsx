@@ -17,10 +17,6 @@ import { ALLOWED_EXTENSIONS } from "$app/utils/file";
 import { asyncVoid } from "$app/utils/promise";
 import { request, AbortError, assertResponseError } from "$app/utils/request";
 import { register } from "$app/utils/serverComponentUtil";
-import {
-  SOCIAL_PROOF_TEMPLATE_VARIABLES,
-  getAllowedTemplateVariableKeys,
-} from "$app/utils/socialProofTemplateVariables";
 import { writeQueryParams } from "$app/utils/url";
 
 import { Button } from "$app/components/Button";
@@ -66,24 +62,6 @@ const IMAGE_TYPE_OPTIONS: ImageTypeOption[] = [
   { id: "icon", label: "Icon" },
 ];
 
-type VariableInsertionButtonsProps = {
-  onInsertVariable: (variable: string) => void;
-};
-
-const VariableInsertionButtons: React.FC<VariableInsertionButtonsProps> = ({ onInsertVariable }) => (
-  <div style={{ display: "flex", gap: "var(--spacer-2)", marginTop: "var(--spacer-2)", flexWrap: "wrap" }}>
-    {SOCIAL_PROOF_TEMPLATE_VARIABLES.map((item) => (
-      <Button
-        key={item.key}
-        small
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => onInsertVariable(item.variable)}
-      >
-        {item.label}
-      </Button>
-    ))}
-  </div>
-);
 
 type Product = {
   id: string;
@@ -241,6 +219,7 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
 
   const handleCreateWidget = () => {
     setEditingWidget(null);
+    setSelectedWidgetId(null);
     setView("create");
   };
 
@@ -392,6 +371,7 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
             onClose={() => setSelectedWidgetId(null)}
             onEdit={() => {
               setEditingWidget(selectedWidget);
+              setSelectedWidgetId(null);
               setView("edit");
             }}
             onDuplicate={() => {
@@ -410,10 +390,14 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
       widget={editingWidget}
       products={products}
       view={view}
-      onClose={() => setView("list")}
+      onClose={() => {
+        setView("list");
+        setSelectedWidgetId(null);
+      }}
       onSave={() => {
         // Refresh the widgets list after successful save
         loadWidgets(1, searchTerm);
+        setSelectedWidgetId(null);
         setView("list");
       }}
     />
@@ -437,8 +421,9 @@ const WidgetFormModal = ({
   const [formData, setFormData] = React.useState<{
     name: string;
     universal: boolean;
+    widget_type: "purchases" | "memberships";
     title: string;
-    description: string;
+    message_end: string;
     cta_text: string;
     cta_type: "button" | "link" | "none";
     image_type: "product_thumbnail" | "custom_image" | "icon" | "none";
@@ -450,77 +435,30 @@ const WidgetFormModal = ({
   }>({
     name: widget?.name || "",
     universal: widget?.universal || false,
+    widget_type: widget?.widget_type || "purchases",
     title: widget?.title || "",
-    description: widget?.description || "",
-    cta_text: widget?.cta_text || "",
+    message_end: widget?.message_end || "",
+    cta_text: widget?.cta_text || "Buy now",
     cta_type: widget?.cta_type ?? "button",
-    image_type: widget?.image_type ?? "none",
+    image_type: widget?.image_type ?? "icon",
     icon_name: widget?.icon_name || "flame-fill",
-    icon_color: widget?.icon_color || "#D73027",
+    icon_color: widget?.icon_color || "#14b8a6",
     custom_image_url: widget?.custom_image_url || "",
     enabled: widget?.enabled ?? false,
     link_ids: widget?.products?.map((p) => p.id) || [],
   });
 
-  const [focusedField, setFocusedField] = React.useState<"title" | "description" | "cta_text" | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isPublishing, setIsPublishing] = React.useState(false);
-  const [validationErrors, setValidationErrors] = React.useState<Record<string, string[]>>({});
   const [imagesUploading, setImagesUploading] = React.useState<Set<File>>(new Set());
   const uid = React.useId();
 
   // Template validation helpers
-  const validateTemplateString = (value: string): string[] => {
-    const errors: string[] = [];
-
-    if (!value) return errors;
-
-    // Check for unmatched braces
-    const openBraces = (value.match(/\{\{/gu) || []).length;
-    const closeBraces = (value.match(/\}\}/gu) || []).length;
-
-    if (openBraces !== closeBraces) {
-      errors.push("Unmatched template braces");
-    }
-
-    // Check for empty variables
-    if (/\{\{\s*\}\}/u.exec(value)) {
-      errors.push("Empty template variables not allowed");
-    }
-
-    // Check for nested braces
-    if (/\{\{[^}]*\{\{/u.exec(value) || /\}\}[^{]*\}\}/u.exec(value)) {
-      errors.push("Nested or malformed template braces");
-    }
-
-    // Check for invalid variables
-    const allowedVariables = getAllowedTemplateVariableKeys();
-    const variables = (value.match(/\{\{([^}]+)\}\}/gu) || []).map((v) => v.replace(/\{\{|\}\}/gu, "").trim());
-    const invalidVariables = variables.filter((v) => !allowedVariables.includes(v));
-
-    if (invalidVariables.length > 0) {
-      errors.push(`Invalid variables: ${invalidVariables.join(", ")}`);
-    }
-
-    return errors;
-  };
 
   const handleFieldChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // Real-time template validation for template fields
-    if (["title", "description", "cta_text"].includes(field)) {
-      const errors = validateTemplateString(value);
-      setValidationErrors((prev) => ({ ...prev, [field]: errors }));
-    }
   };
 
-  const handleInsertVariable = (variable: string) => {
-    if (!focusedField) return;
-
-    const newValue = `${formData[focusedField] + variable} `;
-    handleFieldChange(focusedField, newValue);
-  };
 
   const handleSave = asyncVoid(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -530,8 +468,10 @@ const WidgetFormModal = ({
       const payload: SocialProofWidgetPayload = {
         name: formData.name,
         universal: formData.universal,
+        widget_type: formData.widget_type,
         title: formData.title,
-        description: formData.description,
+        message_start: "",
+        message_end: formData.message_end,
         cta_text: formData.cta_text,
         cta_type: formData.cta_type,
         image_type: formData.image_type,
@@ -570,8 +510,10 @@ const WidgetFormModal = ({
       const payload: SocialProofWidgetPayload = {
         name: formData.name,
         universal: formData.universal,
+        widget_type: formData.widget_type,
         title: formData.title,
-        description: formData.description,
+        message_start: "",
+        message_end: formData.message_end,
         cta_text: formData.cta_text,
         cta_type: formData.cta_type,
         image_type: formData.image_type,
@@ -621,12 +563,8 @@ const WidgetFormModal = ({
     }
 
     return {
-      name: previewProduct?.name || "Digital Marketing Course",
-      price: previewProduct?.price || "$29", // Use actual product price if available
       sales_count: previewProduct?.sales_count || 1247,
-      country: "United States",
-      customer_name: "Sarah M.", // Would be anonymized as "FirstName L." from recent purchase
-      recent_sale_time: "2 hours ago", // Would be time_ago_in_words from recent purchase
+      members_count: 234, // Mock value - subscription data not available in admin dashboard context
       thumbnail_url: previewProduct?.thumbnail_url || "https://via.placeholder.com/48x48/4ecdc4/ffffff?text=📦",
     };
   };
@@ -637,11 +575,15 @@ const WidgetFormModal = ({
 
     const widgetData: SocialProofWidgetData = {
       id: "preview-widget",
+      widget_type: formData.widget_type,
       title: formData.title,
-      description: formData.description,
+      message_start: formData.widget_type === "purchases" ? "people bought this product in the last 24 hours." : "Become one of the",
+      message_end: formData.message_end,
       cta_text: formData.cta_text,
       cta_type: formData.cta_type,
       image_type: imageType,
+      number: formData.widget_type === "purchases" ? 47 : 1234,
+      number_text: formData.widget_type === "purchases" ? "" : "members and get new content every month",
     };
 
     // Only include custom_image_url when image_type is "custom_image"
@@ -782,10 +724,59 @@ const WidgetFormModal = ({
               <header>
                 <h3>Message</h3>
                 <p>
-                  Click on the buttons below to quickly add them to your title, description, or call to action. This
-                  will dynamically update your widget.
+                  Create a simple message that will encourage customers to purchase your product.
                 </p>
               </header>
+
+              <fieldset>
+                <legend>Widget type</legend>
+                <div
+                  className="radio-buttons"
+                  role="radiogroup"
+                  aria-label="Select widget type"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "var(--spacer-2)",
+                    marginBottom: "var(--spacer-3)",
+                  }}
+                >
+                  <Button
+                    role="radio"
+                    aria-checked={formData.widget_type === "purchases"}
+                    onClick={() => setFormData((prev) => ({ ...prev, widget_type: "purchases" }))}
+                    className={cx("toggle-button", formData.widget_type === "purchases" && "selected")}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "var(--spacer-2)",
+                      padding: "var(--spacer-3)",
+                    }}
+                  >
+                    <Icon name="cart3-fill" />
+                    Purchases
+                  </Button>
+                  <Button
+                    role="radio"
+                    aria-checked={formData.widget_type === "memberships"}
+                    onClick={() => setFormData((prev) => ({ ...prev, widget_type: "memberships" }))}
+                    className={cx("toggle-button", formData.widget_type === "memberships" && "selected")}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "var(--spacer-2)",
+                      padding: "var(--spacer-3)",
+                    }}
+                  >
+                    <Icon name="people-fill" />
+                    Memberships
+                  </Button>
+                </div>
+              </fieldset>
 
               <fieldset>
                 <legend>
@@ -796,49 +787,23 @@ const WidgetFormModal = ({
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleFieldChange("title", e.target.value)}
-                  onFocus={() => setFocusedField("title")}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder="Join {{total_sales}} members today!"
                   maxLength={500}
-                  className={validationErrors.title && validationErrors.title.length > 0 ? "error" : ""}
+                  className=""
                 />
-                {validationErrors.title && validationErrors.title.length > 0 ? (
-                  <div className="field-errors">
-                    {validationErrors.title.map((error, index) => (
-                      <div key={index} className="error-message">
-                        {error}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-                {focusedField === "title" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
               </fieldset>
 
               <fieldset>
                 <legend>
-                  <label htmlFor={`${uid}-description`}>Description</label>
+                  <label htmlFor={`${uid}-message_end`}>End of message</label>
                 </legend>
                 <textarea
-                  id={`${uid}-description`}
-                  value={formData.description}
-                  onChange={(e) => handleFieldChange("description", e.target.value)}
-                  onFocus={() => setFocusedField("description")}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder="Get lifetime access to the {{product_name}} and start your entrepreneurial journey now."
-                  maxLength={1000}
-                  rows={3}
-                  className={validationErrors.description && validationErrors.description.length > 0 ? "error" : ""}
+                  id={`${uid}-message_end`}
+                  value={formData.message_end}
+                  onChange={(e) => handleFieldChange("message_end", e.target.value)}
+                  maxLength={200}
+                  rows={2}
+                  className=""
                 />
-                {validationErrors.description && validationErrors.description.length > 0 ? (
-                  <div className="field-errors">
-                    {validationErrors.description.map((error, index) => (
-                      <div key={index} className="error-message">
-                        {error}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-                {focusedField === "description" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
               </fieldset>
 
               <fieldset>
@@ -850,22 +815,10 @@ const WidgetFormModal = ({
                   type="text"
                   value={formData.cta_text}
                   onChange={(e) => handleFieldChange("cta_text", e.target.value)}
-                  onFocus={() => setFocusedField("cta_text")}
-                  onBlur={() => setFocusedField(null)}
                   placeholder="Purchase Now - {{price}}"
                   maxLength={255}
-                  className={validationErrors.cta_text && validationErrors.cta_text.length > 0 ? "error" : ""}
+                  className=""
                 />
-                {validationErrors.cta_text && validationErrors.cta_text.length > 0 ? (
-                  <div className="field-errors">
-                    {validationErrors.cta_text.map((error, index) => (
-                      <div key={index} className="error-message">
-                        {error}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-                {focusedField === "cta_text" && <VariableInsertionButtons onInsertVariable={handleInsertVariable} />}
               </fieldset>
 
               <fieldset>
@@ -991,44 +944,31 @@ const WidgetFormModal = ({
             }}
           >
             <Preview scaleFactor={0.8}>
-              {formData.title || formData.description || formData.cta_text ? (
+              <div
+                style={{
+                  position: "relative",
+                  width: "400px",
+                  height: "300px",
+                  backgroundColor: "rgb(var(--page-background))",
+                  padding: "var(--spacer-4)",
+                }}
+              >
                 <div
                   style={{
-                    position: "relative",
-                    width: "400px",
-                    height: "300px",
-                    backgroundColor: "rgb(var(--page-background))",
-                    padding: "var(--spacer-4)",
+                    position: "absolute",
+                    bottom: "20px",
+                    left: "20px",
+                    maxWidth: "360px",
                   }}
                 >
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "20px",
-                      left: "20px",
-                      maxWidth: "360px",
-                    }}
-                  >
-                    <SocialProofWidget
-                      widget={getPreviewWidgetData()}
-                      productData={getPreviewProductData()}
-                      disableAnalytics
-                      className="preview-mode"
-                    />
-                  </div>
+                  <SocialProofWidget
+                    widget={getPreviewWidgetData()}
+                    productData={getPreviewProductData()}
+                    disableAnalytics
+                    className="preview-mode"
+                  />
                 </div>
-              ) : (
-                <div
-                  style={{
-                    padding: "var(--spacer-4)",
-                    textAlign: "center",
-                    color: "var(--text-muted)",
-                    fontStyle: "italic",
-                  }}
-                >
-                  Your widget preview will appear here
-                </div>
-              )}
+              </div>
             </Preview>
           </div>
         </aside>

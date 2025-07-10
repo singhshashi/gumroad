@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require Rails.root.join("app/modules/social_proof_template_variables")
 
 class SocialProofWidget < ApplicationRecord
   include Deletable
@@ -27,21 +26,23 @@ class SocialProofWidget < ApplicationRecord
       none
     ]
   }
-  validates :title, presence: true, length: { maximum: 50 }
-  validates :description, presence: true, length: { maximum: 200 }
+  validates :widget_type, inclusion: { in: %w[purchases memberships] }
+  validates :title, length: { maximum: 50 }
+  validates :message_start, length: { maximum: 200 }
+  validates :message_end, length: { maximum: 200 }
   validates :cta_text, length: { maximum: 255 }
   validates :icon_name, presence: true, if: :icon_type?
 
   validate :universal_widget_limit
   validate :custom_image_presence
   validate :icon_presence
-  validate :template_variables_valid
-  validate :template_syntax_valid
 
   scope :alive, -> { where(deleted_at: nil) }
   scope :universal, -> { where(universal: true) }
   scope :product_specific, -> { where(universal: false) }
   scope :enabled_widgets, -> { alive.enabled }
+  scope :purchases_widgets, -> { where(widget_type: 'purchases') }
+  scope :memberships_widgets, -> { where(widget_type: 'memberships') }
 
   attr_json_data_accessor :custom_image_url, default: -> { nil }
   attr_json_data_accessor :icon_name, default: -> { nil }
@@ -75,16 +76,58 @@ class SocialProofWidget < ApplicationRecord
     cta_type == "link"
   end
 
-  def process_template_strings(context = {})
-    processed_title = process_template_string(title, context)
-    processed_description = process_template_string(description, context)
-    processed_cta_text = process_template_string(cta_text, context)
+  def purchases_widget?
+    widget_type == 'purchases'
+  end
 
+  def memberships_widget?
+    widget_type == 'memberships'
+  end
+
+  def self.default_examples
     {
-      title: processed_title,
-      description: processed_description,
-      cta_text: processed_cta_text
+      purchases: {
+        title: "Don't miss out!",
+        message_end: "Join them and get this product today!",
+        cta_text: "Buy Now",
+        cta_type: "button",
+        image_type: "icon",
+        icon_name: "cart3-fill",
+        icon_color: "#059669"
+      },
+      memberships: {
+        title: "Join the community",
+        message_end: "Get exclusive benefits and insider access!",
+        cta_text: "Join Now",
+        cta_type: "button", 
+        image_type: "icon",
+        icon_name: "people-fill",
+        icon_color: "#7c3aed"
+      }
     }
+  end
+
+  def generate_widget_data_for_product(product)
+    case widget_type
+    when 'purchases'
+      {
+        title: title,
+        message_start: message_start,
+        message_end: message_end,
+        cta_text: cta_text,
+        number: purchases_last_24h(product),
+        number_text: "purchases in the last 24 hours"
+      }
+    when 'memberships'
+      {
+        title: title,
+        message_start: message_start,
+        message_end: message_end,
+        cta_text: cta_text,
+        number: total_memberships(product),
+        number_text: "total members"
+      }
+    end
   end
 
   def widgets_for_product(product)
@@ -95,53 +138,18 @@ class SocialProofWidget < ApplicationRecord
     product_specific_widgets.presence || universal_widgets.limit(1)
   end
 
-  def template_context_for_product(product)
-    # Get recent successful purchases for social proof data
-    recent_purchases = product.sales
-                             .where(state: Purchase::ALL_SUCCESS_STATES)
-                             .where(created_at: 48.hours.ago..)
-                             .order(created_at: :desc)
-                             .limit(10)
+  def purchases_last_24h(product)
+    product.sales
+           .where(state: Purchase::ALL_SUCCESS_STATES)
+           .where(created_at: 24.hours.ago..)
+           .count
+  end
 
-    recent_purchase = recent_purchases.first
-
-    # Product-specific data
-    context = {
-      product_name: product.name,
-      price: Money.new(product.default_price_cents, product.price_currency_type || "USD").format,
-      total_sales: product.successful_sales_count.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
-    }
-
-    # Recent purchase data for social proof
-    if recent_purchase
-      # Anonymize customer name (first name + initial)
-      customer_name = if recent_purchase.full_name.present?
-        name_parts = recent_purchase.full_name.split(" ")
-        first_name = name_parts.first
-        if name_parts.length > 1
-          "#{first_name} #{name_parts.last[0]}."
-        else
-          first_name
-        end
-      else
-        "Someone"
-      end
-
-      context.merge!({
-                       country: recent_purchase.country || "Unknown",
-                       customer_name: customer_name,
-                       recent_sale_time: ActionController::Base.helpers.time_ago_in_words(recent_purchase.created_at) + " ago"
-                     })
-    else
-      # Fallback when no recent purchases
-      context.merge!({
-                       country: "Unknown",
-                       customer_name: "Someone",
-                       recent_sale_time: "recently"
-                     })
-    end
-
-    context
+  def total_memberships(product)
+    # Count active subscriptions for this product
+    product.subscriptions
+           .active
+           .count
   end
 
   def increment_impression!
@@ -183,8 +191,10 @@ class SocialProofWidget < ApplicationRecord
       user: user,
       name: "#{name} (copy)",
       universal: universal,
+      widget_type: widget_type,
       title: title,
-      description: description,
+      message_start: message_start,
+      message_end: message_end,
       cta_text: cta_text,
       cta_type: cta_type,
       image_type: image_type,
@@ -207,7 +217,25 @@ class SocialProofWidget < ApplicationRecord
   private
     def set_defaults
       self.enabled = false if enabled.nil?
-      self.cta_type ||= "button"
+      self.widget_type ||= "purchases"
+      
+      # Set defaults based on widget type if creating new widget
+      if widget_type && (title.blank? || message_start.blank?)
+        defaults = self.class.default_examples[widget_type.to_sym]
+        if defaults
+          self.title ||= defaults[:title]
+          self.message_start ||= defaults[:message_start]
+          self.message_end ||= defaults[:message_end]
+          self.cta_text ||= defaults[:cta_text]
+          self.cta_type ||= defaults[:cta_type]
+          self.image_type ||= defaults[:image_type]
+          self.icon_name ||= defaults[:icon_name]
+          self.icon_color ||= defaults[:icon_color]
+        end
+      end
+      
+      # Fallback defaults
+      self.cta_type ||= "none"
       self.image_type ||= "none"
     end
 
@@ -217,7 +245,7 @@ class SocialProofWidget < ApplicationRecord
 
       # Define content fields that should trigger unpublishing when changed
       content_fields = %w[
-        name title description cta_text cta_type image_type
+        name widget_type title message_start message_end cta_text cta_type image_type
         custom_image_url icon_name icon_color universal
       ]
 
@@ -234,47 +262,6 @@ class SocialProofWidget < ApplicationRecord
       end
     end
 
-    def template_variables_valid
-      allowed_variables = SocialProofTemplateVariables::ALLOWED_VARIABLES
-      template_fields = [title, description, cta_text].compact
-
-      template_fields.each do |field|
-        variables = field.scan(/\{\{([^}]+)\}\}/).flatten.map(&:strip)
-        invalid_variables = variables - allowed_variables
-
-        if invalid_variables.any?
-          errors.add(:base, "Invalid template variables: #{invalid_variables.join(', ')}. Allowed variables are: #{allowed_variables.join(', ')}")
-        end
-      end
-    end
-
-    def template_syntax_valid
-      template_fields = [
-        { field: title, name: "title" },
-        { field: description, name: "description" },
-        { field: cta_text, name: "cta_text" }
-      ].reject { |item| item[:field].blank? }
-
-      template_fields.each do |item|
-        field_value = item[:field]
-        field_name = item[:name]
-
-        # Check for unmatched braces
-        if field_value.count("{{") != field_value.count("}}")
-          errors.add(field_name.to_sym, "has unmatched template braces")
-        end
-
-        # Check for empty variables
-        if field_value.match?(/\{\{\s*\}\}/)
-          errors.add(field_name.to_sym, "contains empty template variables")
-        end
-
-        # Check for nested braces
-        if field_value.match(/\{\{[^}]*\{\{/) || field_value.match(/\}\}[^{]*\}\}/)
-          errors.add(field_name.to_sym, "contains nested or malformed template braces")
-        end
-      end
-    end
 
     def universal_widget_limit
       return unless universal?
@@ -303,16 +290,4 @@ class SocialProofWidget < ApplicationRecord
       end
     end
 
-    def process_template_string(template, context)
-      return template if template.blank?
-
-      result = template.dup
-
-      context.each do |key, value|
-        placeholder = "{{#{key}}}"
-        result.gsub!(placeholder, value.to_s) if result.include?(placeholder)
-      end
-
-      result
-    end
 end

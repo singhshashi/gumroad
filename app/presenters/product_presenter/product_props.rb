@@ -188,15 +188,31 @@ class ProductPresenter::ProductProps
 
       Rails.logger.info "[SOCIAL_PROOF_WIDGETS] Product #{product.id} (#{product.name}) - Available widgets: #{all_available_widgets.count} (#{all_available_widgets.map(&:name).join(', ')}) - Selected: #{selected_widgets.count} (#{selected_widgets.map(&:name).join(', ')})"
 
+      # Get the real product data context (simplified - no template variables)
+      product_data = {
+        sales_count: product.successful_sales_count || 0,
+        members_count: product.subscriptions.active.count || 0,
+      }
+      
+      if product.thumbnail&.url
+        product_data[:thumbnail_url] = product.thumbnail.url
+      end
+
       selected_widgets.map do |widget|
-        processed_content = widget.process_template_strings(widget.template_context_for_product(product))
+        widget_data_from_model = widget.generate_widget_data_for_product(product)
+        
         widget_data = {
           id: widget.external_id,
-          title: processed_content[:title],
-          description: processed_content[:description],
-          cta_text: processed_content[:cta_text],
+          widget_type: widget.widget_type,
+          title: widget_data_from_model[:title],
+          message_start: widget_data_from_model[:message_start],
+          message_end: widget_data_from_model[:message_end],
+          cta_text: widget_data_from_model[:cta_text],
           cta_type: widget.cta_type,
           image_type: widget.image_type,
+          number: widget_data_from_model[:number],
+          number_text: widget_data_from_model[:number_text],
+          product_data: product_data
         }
 
         # Only include custom_image_url when image_type is "custom_image"

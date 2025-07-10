@@ -116,8 +116,10 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
       params.require(:social_proof_widget).permit(
         :name,
         :universal,
+        :widget_type,
         :title,
-        :description,
+        :message_start,
+        :message_end,
         :cta_text,
         :cta_type,
         :image_type,

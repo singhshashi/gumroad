@@ -8,27 +8,31 @@ import { Icon } from "$app/components/Icons";
 
 export type SocialProofWidgetData = {
   id: string;
-  title: string; // Required field (max 50 chars)
-  description: string; // Required field (max 200 chars)
+  widget_type: "purchases" | "memberships";
+  title: string | null; // Optional field (max 50 chars)
+  message_start: string | null; // Optional field (max 200 chars)
+  message_end: string | null; // Optional field (max 200 chars)
   cta_text: string | null; // Can be null when cta_type is "none"
   cta_type: "button" | "link" | "none";
   image_type: string;
   custom_image_url?: string; // Only when image_type is "custom_image"
   icon_name?: SocialProofWidgetIconType; // Only when image_type is "icon"
   icon_color?: string; // Only when image_type is "icon"
-  // product_thumbnail_url removed - get from product data
+  number: number; // Calculated number (purchases or memberships)
+  number_text: string; // Description of the number
+  product_data?: {
+    sales_count: number;
+    members_count: number;
+    thumbnail_url?: string;
+  } | null;
 };
 
 type SocialProofWidgetProps = {
   widget: SocialProofWidgetData;
   productData?:
     | {
-        name: string;
-        price: string;
         sales_count: number;
-        country: string;
-        customer_name?: string;
-        recent_sale_time?: string;
+        members_count: number;
         thumbnail_url?: string;
       }
     | undefined;
@@ -74,35 +78,31 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
   };
 
   const processedContent = React.useMemo(() => {
-    if (!productData) return { title: widget.title, description: widget.description };
+    // Build the widget message based on widget type
+    const buildWidgetMessage = () => {
+      const parts = [];
 
-    const context = {
-      product_name: productData.name,
-      price: productData.price,
-      sales_count: productData.sales_count.toString(),
-      total_sales: productData.sales_count.toString(),
-      country: productData.country,
-      customer_name: productData.customer_name || "Someone",
-      recent_sale_time: productData.recent_sale_time || "recently",
-    };
+      if (widget.widget_type === "purchases") {
+        // For purchases: "[number] people bought this product in the last 24 hours. [custom_end]"
+        parts.push(`${widget.number} people bought this product in the last 24 hours.`);
+      } else if (widget.widget_type === "memberships") {
+        // For memberships: "Become one of the [number] members and get new content every month [custom_end]"
+        parts.push(`Become one of the ${widget.number} members and get new content every month`);
+      }
 
-    const processTemplate = (template?: string) => {
-      if (!template) return template;
+      if (widget.message_end) {
+        parts.push(widget.message_end);
+      }
 
-      let result = template;
-      Object.entries(context).forEach(([key, value]) => {
-        const placeholder = `{{${key}}}`;
-        result = result.replace(new RegExp(placeholder.replace(/[{}]/gu, "\\$&"), "gu"), value);
-      });
-      return result;
+      return parts.join(" ").trim();
     };
 
     return {
-      title: processTemplate(widget.title),
-      description: processTemplate(widget.description),
-      cta_text: processTemplate(widget.cta_text || undefined),
+      title: widget.title,
+      description: buildWidgetMessage(),
+      cta_text: widget.cta_text,
     };
-  }, [widget, productData]);
+  }, [widget]);
 
   const renderImage = () => {
     if (widget.image_type === "custom_image" && widget.custom_image_url) {
@@ -130,6 +130,12 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
           style={{
             backgroundColor: widget.icon_color ? hexToRgba(iconColor, 0.15) : "#f3f4f6",
             borderColor: "#000000",
+            width: "48px",
+            height: "48px",
+            borderRadius: "8px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <Icon name={widget.icon_name} className="widget-icon__svg" style={{ color: iconColor }} />
@@ -149,7 +155,13 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
 
     if (widget.cta_type === "button") {
       return (
-        <Button onClick={handleAction} color="success" small className="widget-cta-button">
+        <Button 
+          onClick={handleAction} 
+          color="success" 
+          small 
+          className="widget-cta-button"
+          style={{ width: "100%", boxSizing: "border-box" }}
+        >
           {processedContent.cta_text}
         </Button>
       );
@@ -178,23 +190,98 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         },
         className,
       )}
+      style={{
+        backgroundColor: "white",
+        border: "1px solid #e5e7eb",
+        borderRadius: "8px",
+        padding: "12px",
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        position: "relative",
+        maxWidth: "320px",
+        fontSize: "14px",
+        lineHeight: "1.4",
+      }}
     >
-      <button onClick={handleClose} className="social-proof-widget__close" aria-label="Close">
+      <button 
+        onClick={handleClose} 
+        className="social-proof-widget__close" 
+        aria-label="Close"
+        style={{
+          position: "absolute",
+          top: "8px",
+          right: "8px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: "#9ca3af",
+          fontSize: "16px",
+          padding: "2px",
+        }}
+      >
         <Icon name="x" />
       </button>
 
-      <div className="social-proof-widget__content">
-        {renderImage()}
+      <div 
+        className="social-proof-widget__content"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}
+      >
+        <div 
+          style={{
+            display: "flex",
+            gap: "12px",
+            alignItems: "flex-start",
+          }}
+        >
+          {renderImage()}
 
-        <div className="social-proof-widget__text">
-          {processedContent.title ? <h4 className="social-proof-widget__title">{processedContent.title}</h4> : null}
+          <div 
+            className="social-proof-widget__text"
+            style={{
+              flex: "1",
+              minWidth: "0",
+              paddingRight: "24px",
+            }}
+          >
+            {processedContent.title ? (
+              <h4 
+                className="social-proof-widget__title"
+                style={{
+                  margin: "0 0 4px 0",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#111827",
+                }}
+              >
+                {processedContent.title}
+              </h4>
+            ) : null}
 
-          {processedContent.description ? (
-            <p className="social-proof-widget__description">{processedContent.description}</p>
-          ) : null}
+            {processedContent.description ? (
+              <p 
+                className="social-proof-widget__description"
+                style={{
+                  margin: "0",
+                  fontSize: "14px",
+                  color: "#374151",
+                }}
+              >
+                {processedContent.description}
+              </p>
+            ) : null}
 
-          {renderCTA()}
+            {widget.cta_type === "link" && renderCTA()}
+          </div>
         </div>
+
+        {widget.cta_type === "button" && (
+          <div style={{ width: "100%", boxSizing: "border-box" }}>
+            {renderCTA()}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -241,12 +328,8 @@ const trackWidgetClose = async (widgetId: string) => {
 export const SocialProofWidgetContainer: React.FC<{
   widgets: SocialProofWidgetData[];
   productData?: {
-    name: string;
-    price: string;
     sales_count: number;
-    country: string;
-    customer_name?: string;
-    recent_sale_time?: string;
+    members_count: number;
     thumbnail_url?: string;
   };
   onAction?: (() => void) | undefined;
@@ -255,7 +338,7 @@ export const SocialProofWidgetContainer: React.FC<{
     if (widgets.length === 0) return null;
     // the structure allows for multiple widgets to be passed to the client
     // so we can randomly select one or change the implementation as per future needs
-    // Right now we are always sending only one widget in the array 
+    // Right now we are always sending only one widget in the array
     return widgets[Math.floor(Math.random() * widgets.length)];
   });
 
