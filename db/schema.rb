@@ -2081,7 +2081,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_26_103026) do
     t.boolean "universal", default: false, null: false
     t.string "widget_type", default: "purchases", null: false
     t.text "title", size: :tiny
-    t.text "message_start", size: :tiny
     t.text "message_end", size: :tiny
     t.string "cta_text"
     t.string "cta_type", default: "none", null: false

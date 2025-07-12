@@ -9,7 +9,6 @@ class CreateSocialProofWidgets < ActiveRecord::Migration[7.1]
       t.boolean :universal, default: false, null: false
       t.string :widget_type, default: 'purchases', null: false
       t.text :title, limit: 50
-      t.text :message_start, limit: 200
       t.text :message_end, limit: 200
       t.string :cta_text, limit: 255
       t.string :cta_type, default: 'none', null: false

@@ -9,7 +9,6 @@ export type SocialProofWidgetPayload = {
   universal: boolean;
   widget_type: "purchases" | "memberships";
   title: string;
-  message_start: string;
   message_end: string;
   cta_text: string;
   cta_type: "button" | "link" | "none";
@@ -29,7 +28,6 @@ export type SocialProofWidget = {
   universal: boolean;
   widget_type: "purchases" | "memberships";
   title: string;
-  message_start: string;
   message_end: string;
   cta_text: string;
   cta_type: "button" | "link" | "none";
@@ -67,7 +65,6 @@ export const createSocialProofWidget = async (payload: SocialProofWidgetPayload)
         universal: payload.universal,
         widget_type: payload.widget_type,
         title: payload.title,
-        message_start: payload.message_start,
         message_end: payload.message_end,
         cta_text: payload.cta_text,
         cta_type: payload.cta_type,
@@ -101,7 +98,6 @@ export const updateSocialProofWidget = async (id: string, payload: SocialProofWi
         universal: payload.universal,
         widget_type: payload.widget_type,
         title: payload.title,
-        message_start: payload.message_start,
         message_end: payload.message_end,
         cta_text: payload.cta_text,
         cta_type: payload.cta_type,

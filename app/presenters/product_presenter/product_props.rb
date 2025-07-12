@@ -205,7 +205,6 @@ class ProductPresenter::ProductProps
           id: widget.external_id,
           widget_type: widget.widget_type,
           title: widget_data_from_model[:title],
-          message_start: widget_data_from_model[:message_start],
           message_end: widget_data_from_model[:message_end],
           cta_text: widget_data_from_model[:cta_text],
           cta_type: widget.cta_type,

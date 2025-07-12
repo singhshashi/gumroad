@@ -118,7 +118,6 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
         :universal,
         :widget_type,
         :title,
-        :message_start,
         :message_end,
         :cta_text,
         :cta_type,

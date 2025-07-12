@@ -28,7 +28,6 @@ class SocialProofWidget < ApplicationRecord
   }
   validates :widget_type, inclusion: { in: %w[purchases memberships] }
   validates :title, length: { maximum: 50 }
-  validates :message_start, length: { maximum: 200 }
   validates :message_end, length: { maximum: 200 }
   validates :cta_text, length: { maximum: 255 }
   validates :icon_name, presence: true, if: :icon_type?
@@ -112,7 +111,6 @@ class SocialProofWidget < ApplicationRecord
     when 'purchases'
       {
         title: title,
-        message_start: message_start,
         message_end: message_end,
         cta_text: cta_text,
         number: purchases_last_24h(product),
@@ -121,7 +119,6 @@ class SocialProofWidget < ApplicationRecord
     when 'memberships'
       {
         title: title,
-        message_start: message_start,
         message_end: message_end,
         cta_text: cta_text,
         number: total_memberships(product),
@@ -220,11 +217,10 @@ class SocialProofWidget < ApplicationRecord
       self.widget_type ||= "purchases"
       
       # Set defaults based on widget type if creating new widget
-      if widget_type && (title.blank? || message_start.blank?)
+      if widget_type && title.blank?
         defaults = self.class.default_examples[widget_type.to_sym]
         if defaults
           self.title ||= defaults[:title]
-          self.message_start ||= defaults[:message_start]
           self.message_end ||= defaults[:message_end]
           self.cta_text ||= defaults[:cta_text]
           self.cta_type ||= defaults[:cta_type]
@@ -245,7 +241,7 @@ class SocialProofWidget < ApplicationRecord
 
       # Define content fields that should trigger unpublishing when changed
       content_fields = %w[
-        name widget_type title message_start message_end cta_text cta_type image_type
+        name widget_type title message_end cta_text cta_type image_type
         custom_image_url icon_name icon_color universal
       ]
 
