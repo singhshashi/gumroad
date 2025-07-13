@@ -73,6 +73,11 @@ class Checkout::SocialProofWidgetsPresenter
       clicks: analytics_data["clicks"] || 0,
       closes: analytics_data["closes"] || 0,
       conversion_rate: widget.conversion_rate,
+      attributed_revenue_cents: widget.total_attributed_revenue_cents,
+      attributed_revenue_formatted: widget.total_attributed_revenue.format,
+      attributed_purchases_count: widget.attributed_purchases_count,
+      revenue_per_impression: calculate_revenue_per_impression(widget),
+      revenue_per_click: calculate_revenue_per_click(widget),
       products_count: widget.universal? ? pundit_user.seller.products.visible_and_not_archived.count : widget.links.visible_and_not_archived.count,
       created_at: widget.created_at.iso8601,
     }
@@ -96,6 +101,27 @@ class Checkout::SocialProofWidgetsPresenter
         clicks: analytics_data["clicks"] || 0,
         closes: analytics_data["closes"] || 0,
         conversion_rate: widget.conversion_rate,
+        attributed_revenue_cents: widget.total_attributed_revenue_cents,
+        attributed_revenue_formatted: widget.total_attributed_revenue.format,
+        attributed_purchases_count: widget.attributed_purchases_count,
+        revenue_per_impression: calculate_revenue_per_impression(widget),
+        revenue_per_click: calculate_revenue_per_click(widget)
       }
+    end
+
+    def calculate_revenue_per_impression(widget)
+      analytics_data = widget.analytics_data || {}
+      impressions = analytics_data["impressions"] || 0
+      return 0 if impressions.zero?
+      
+      (widget.total_attributed_revenue_cents / impressions.to_f).round(2)
+    end
+
+    def calculate_revenue_per_click(widget)
+      analytics_data = widget.analytics_data || {}
+      clicks = analytics_data["clicks"] || 0
+      return 0 if clicks.zero?
+      
+      (widget.total_attributed_revenue_cents / clicks.to_f).round(2)
     end
 end

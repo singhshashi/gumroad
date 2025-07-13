@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Api::Internal::SocialProofWidgetsController < Api::Internal::BaseController
+  include SocialProofCookie
+  
   before_action :set_widget
 
   def impression
@@ -10,6 +12,10 @@ class Api::Internal::SocialProofWidgetsController < Api::Internal::BaseControlle
 
   def click
     @widget.increment_click!
+    
+    # Set attribution cookie
+    create_social_proof_cookie(@widget)
+    
     head :ok
   end
 

@@ -51,6 +51,11 @@ export type SocialProofWidget = {
     clicks: number;
     closes: number;
     conversion_rate: number;
+    attributed_revenue_cents: number;
+    attributed_revenue_formatted: string;
+    attributed_purchases_count: number;
+    revenue_per_impression: number;
+    revenue_per_click: number;
   };
 };
 

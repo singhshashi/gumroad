@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class SocialProofWidgetsController < ApplicationController
+  include SocialProofCookie
   before_action :set_widget
 
   def impression
@@ -10,6 +11,7 @@ class SocialProofWidgetsController < ApplicationController
 
   def click
     @widget.increment_click!
+    create_social_proof_cookie(@widget)
     render json: { success: true }
   end
 

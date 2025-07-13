@@ -22,6 +22,11 @@ class Purchase::BaseService
       purchase.update_balance_and_mark_successful!
       purchase.gift_given.mark_successful! if purchase.is_gift_sender_purchase
       purchase.seller.save_gumroad_day_timezone
+      
+      # Validate social proof widget attribution now that purchase is successful
+      if purchase.social_proof_widget_attribution.present?
+        SocialProofWidgetAttributionService.validate_attribution(purchase.social_proof_widget_attribution)
+      end
       after_commit do
         ActivateIntegrationsWorker.perform_async(purchase.id)
       end

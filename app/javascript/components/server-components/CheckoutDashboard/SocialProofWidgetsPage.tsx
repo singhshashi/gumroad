@@ -322,7 +322,9 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
                     </td>
                     <td style={{ width: "12%", textAlign: "center" }}>{widget.analytics.clicks}</td>
                     <td style={{ width: "12%", textAlign: "center" }}>{widget.analytics.conversion_rate}%</td>
-                    <td style={{ width: "12%", textAlign: "center" }}>$0</td>
+                    <td style={{ width: "12%", textAlign: "center" }}>
+                      {widget.analytics.attributed_revenue_formatted || "$0"}
+                    </td>
                     <td style={{ width: "12%" }}>
                       {widget.enabled ? (
                         <span style={{ color: "var(--success)" }}>Published</span>
@@ -1105,7 +1107,7 @@ const WidgetDrawer = ({
               }}
             >
               <div>Revenue:</div>
-              <div>$0</div>
+              <div>{widget.analytics.attributed_revenue_formatted || "$0"}</div>
             </div>
           </div>
         </section>

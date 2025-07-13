@@ -15,6 +15,10 @@ class SocialProofWidget < ApplicationRecord
 
   belongs_to :user
   has_and_belongs_to_many :links, join_table: "social_proof_widgets_links"
+  
+  # Attribution relationships
+  has_many :social_proof_widget_attributions, dependent: :destroy
+  has_many :attributed_purchases, through: :social_proof_widget_attributions, source: :purchase
 
   validates :name, presence: true, length: { maximum: 255 }
   validates :cta_type, inclusion: { in: %w[button link none] }
@@ -45,8 +49,11 @@ class SocialProofWidget < ApplicationRecord
 
   attr_json_data_accessor :custom_image_url, default: -> { nil }
   attr_json_data_accessor :icon_name, default: -> { nil }
-  attr_json_data_accessor :icon_color, default: -> { "#000000" }
+  attr_json_data_accessor :icon_color, default: -> { "#059669" }
   attr_json_data_accessor :analytics_data, default: -> { {} }
+
+  # Cookie constants (following affiliate pattern)
+  SOCIAL_PROOF_COOKIE_NAME_PREFIX = "_gumroad_social_proof_"
 
   before_validation :set_defaults, on: :create
   before_save :unpublish_if_content_changed
@@ -177,6 +184,28 @@ class SocialProofWidget < ApplicationRecord
     return 0 if impressions == 0
 
     (clicks.to_f / impressions.to_f * 100).round(2)
+  end
+
+  # Cookie management methods (following affiliate pattern)
+  def cookie_key
+    "#{SOCIAL_PROOF_COOKIE_NAME_PREFIX}#{external_id}"
+  end
+
+  def self.cookie_lifetime
+    30.days # Attribution window
+  end
+
+  # Revenue calculation methods (only count confirmed attributions)
+  def total_attributed_revenue_cents
+    social_proof_widget_attributions.confirmed.successful_purchases.sum(:attributed_amount_cents)
+  end
+
+  def total_attributed_revenue
+    Money.new(total_attributed_revenue_cents, "USD")
+  end
+
+  def attributed_purchases_count
+    social_proof_widget_attributions.confirmed.successful_purchases.count
   end
 
   def publish!

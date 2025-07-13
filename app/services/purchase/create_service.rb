@@ -229,6 +229,9 @@ class Purchase::CreateService < Purchase::BaseService
     def build_purchase(params_for_purchase)
       params_for_purchase[:country] = ISO3166::Country[params_for_purchase[:country]]&.common_name
 
+      social_proof_widget_id = params_for_purchase.delete(:social_proof_widget_id)
+      social_proof_cookie_set_at = params_for_purchase.delete(:social_proof_cookie_set_at)
+
       purchase = product.sales.build(params_for_purchase)
       purchase.affiliate = product.collaborator if product.collaborator.present?
       should_ship = product.is_physical || product.require_shipping
@@ -286,6 +289,16 @@ class Purchase::CreateService < Purchase::BaseService
       end
 
       purchase.url_parameters = parse_url_parameters(params_for_purchase[:url_parameters])
+
+      if social_proof_widget_id.present?
+        purchase.build_social_proof_widget_attribution(
+          social_proof_widget_id: social_proof_widget_id,
+          attributed_amount_cents: purchase.price_cents || 0,
+          attribution_status: 'pending',
+          cookie_set_at: social_proof_cookie_set_at
+        )
+      end
+
       purchase
     end
 
