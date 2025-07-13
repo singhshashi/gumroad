@@ -87,6 +87,7 @@ import PaymentsSettingsPage from "$app/components/server-components/Settings/Pay
 import TeamSettingsPage from "$app/components/server-components/Settings/TeamPage";
 import ThirdPartyAnalyticsSettingsPage from "$app/components/server-components/Settings/ThirdPartyAnalyticsPage";
 import SignupPage from "$app/components/server-components/SignupPage";
+import SocialProofWidgetsPage from "$app/components/server-components/CheckoutDashboard/SocialProofWidgetsPage";
 import SubscribePage from "$app/components/server-components/SubscribePage";
 import SubscribePreview from "$app/components/server-components/SubscribePreview";
 import SubscriptionManager from "$app/components/server-components/SubscriptionManager";
@@ -180,6 +181,7 @@ ReactOnRails.register({
   ReviewsPage,
   SecureRedirectPage,
   SignupPage,
+  SocialProofWidgetsPage,
   SubscribePage,
   SubscribePreview,
   SubscribeReviewReminders,
