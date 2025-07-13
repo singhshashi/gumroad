@@ -36,7 +36,6 @@ class SocialProofWidget < ApplicationRecord
   validates :cta_text, length: { maximum: 255 }
   validates :icon_name, presence: true, if: :icon_type?
 
-  validate :universal_widget_limit
   validate :custom_image_presence
   validate :icon_presence
 
@@ -90,28 +89,6 @@ class SocialProofWidget < ApplicationRecord
     widget_type == 'memberships'
   end
 
-  def self.default_examples
-    {
-      purchases: {
-        title: "Don't miss out!",
-        message_end: "Join them and get this product today!",
-        cta_text: "Buy Now",
-        cta_type: "button",
-        image_type: "icon",
-        icon_name: "cart3-fill",
-        icon_color: "#059669"
-      },
-      memberships: {
-        title: "Join the community",
-        message_end: "Get exclusive benefits and insider access!",
-        cta_text: "Join Now",
-        cta_type: "button", 
-        image_type: "icon",
-        icon_name: "people-fill",
-        icon_color: "#7c3aed"
-      }
-    }
-  end
 
   def generate_widget_data_for_product(product)
     case widget_type
@@ -219,7 +196,6 @@ class SocialProofWidget < ApplicationRecord
       universal: universal,
       widget_type: widget_type,
       title: title,
-      message_start: message_start,
       message_end: message_end,
       cta_text: cta_text,
       cta_type: cta_type,
@@ -244,22 +220,6 @@ class SocialProofWidget < ApplicationRecord
     def set_defaults
       self.enabled = false if enabled.nil?
       self.widget_type ||= "purchases"
-      
-      # Set defaults based on widget type if creating new widget
-      if widget_type && title.blank?
-        defaults = self.class.default_examples[widget_type.to_sym]
-        if defaults
-          self.title ||= defaults[:title]
-          self.message_end ||= defaults[:message_end]
-          self.cta_text ||= defaults[:cta_text]
-          self.cta_type ||= defaults[:cta_type]
-          self.image_type ||= defaults[:image_type]
-          self.icon_name ||= defaults[:icon_name]
-          self.icon_color ||= defaults[:icon_color]
-        end
-      end
-      
-      # Fallback defaults
       self.cta_type ||= "none"
       self.image_type ||= "none"
     end
@@ -288,16 +248,6 @@ class SocialProofWidget < ApplicationRecord
     end
 
 
-    def universal_widget_limit
-      return unless universal?
-
-      existing_universal = user.social_proof_widgets.alive.universal
-      existing_universal = existing_universal.where.not(id: id) if persisted?
-
-      if existing_universal.count >= 5
-        errors.add(:universal, "You can have at most 5 universal widgets")
-      end
-    end
 
     def custom_image_presence
       return unless custom_image?
