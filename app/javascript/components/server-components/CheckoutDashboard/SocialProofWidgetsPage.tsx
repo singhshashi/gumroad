@@ -253,8 +253,9 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
                 }}
                 onKeyDown={(evt) => {
                   if (evt.key === "Enter") {
-                    // @ts-expect-error - writeQueryParams type signature issue
-                    writeQueryParams({ search: searchTerm || undefined });
+                    const url = new URL(window.location.href);
+                    const updatedUrl = writeQueryParams(url, { search: searchTerm || null });
+                    window.history.pushState({}, "", updatedUrl.toString());
                     loadWidgets(1, searchTerm);
                     setIsSearchPopoverOpen(false);
                   }

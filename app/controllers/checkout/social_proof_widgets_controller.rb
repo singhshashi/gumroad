@@ -106,7 +106,8 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
       widgets = pundit_user.social_proof_widgets.alive.order(created_at: :desc)
 
       if params[:search].present?
-        widgets = widgets.where("name ILIKE ?", "%#{params[:search]}%")
+        search_query = ActiveRecord::Base.sanitize_sql_like(params[:search].strip)
+        widgets = widgets.where("name LIKE ?", "%#{search_query}%")
       end
 
       pagy(widgets, items: PER_PAGE)
