@@ -294,7 +294,7 @@ class Purchase::CreateService < Purchase::BaseService
         purchase.build_social_proof_widget_attribution(
           social_proof_widget_id: social_proof_widget_id,
           attributed_amount_cents: purchase.price_cents || 0,
-          attribution_status: 'pending',
+          attribution_status: "pending",
           cookie_set_at: social_proof_cookie_set_at
         )
       end

@@ -113,7 +113,7 @@ class Checkout::SocialProofWidgetsPresenter
       analytics_data = widget.analytics_data || {}
       impressions = analytics_data["impressions"] || 0
       return 0 if impressions.zero?
-      
+
       (widget.total_attributed_revenue_cents / impressions.to_f).round(2)
     end
 
@@ -121,7 +121,7 @@ class Checkout::SocialProofWidgetsPresenter
       analytics_data = widget.analytics_data || {}
       clicks = analytics_data["clicks"] || 0
       return 0 if clicks.zero?
-      
+
       (widget.total_attributed_revenue_cents / clicks.to_f).round(2)
     end
 end

@@ -115,7 +115,7 @@ class OrdersController < ApplicationController
         affiliate = fetch_affiliate(product, line_item_params)
         line_item_params.delete(:affiliate_id)
         line_item_params[:affiliate_id] = affiliate.id if affiliate&.eligible_for_purchase_credit?(product:, was_recommended: line_item_params[:was_product_recommended] && line_item_params[:recommended_by] != RecommendationType::GUMROAD_MORE_LIKE_THIS_RECOMMENDATION, purchaser_email: params[:email])
-        
+
         # Add social proof widget attribution
         social_proof_widget, cookie_timestamp = fetch_social_proof_widget_with_timestamp_from_cookies
         if social_proof_widget

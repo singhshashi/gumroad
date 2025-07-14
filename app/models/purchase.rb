@@ -96,7 +96,7 @@ class Purchase < ApplicationRecord
   has_one :commission_as_completion, class_name: "Commission", foreign_key: :completion_purchase_id
   has_one :utm_link_driven_sale
   has_one :utm_link, through: :utm_link_driven_sale
-  
+
   # Social proof widget attribution
   has_one :social_proof_widget_attribution, dependent: :destroy
   has_one :social_proof_widget, through: :social_proof_widget_attribution
@@ -3851,7 +3851,7 @@ class Purchase < ApplicationRecord
 
     def validate_social_proof_widget_attribution
       return unless social_proof_widget_attribution&.pending?
-      
+
       SocialProofWidgetAttributionService.validate_attribution(social_proof_widget_attribution)
     end
 

@@ -193,14 +193,14 @@ class ProductPresenter::ProductProps
         sales_count: product.successful_sales_count || 0,
         members_count: product.subscriptions.active.count || 0,
       }
-      
+
       if product.thumbnail&.url
         product_data[:thumbnail_url] = product.thumbnail.url
       end
 
       selected_widgets.map do |widget|
         widget_data_from_model = widget.generate_widget_data_for_product(product)
-        
+
         widget_data = {
           id: widget.external_id,
           widget_type: widget.widget_type,

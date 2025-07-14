@@ -21,8 +21,7 @@ class SocialProofWidgetsController < ApplicationController
   end
 
   private
-
-  def set_widget
-    @widget = SocialProofWidget.find_by_external_id!(params[:id])
-  end
+    def set_widget
+      @widget = SocialProofWidget.find_by_external_id!(params[:id])
+    end
 end

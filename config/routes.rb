@@ -86,7 +86,7 @@ Rails.application.routes.draw do
         end
       end
     end
-    
+
     resources :social_proof_widgets, only: [] do
       member do
         if named_routes

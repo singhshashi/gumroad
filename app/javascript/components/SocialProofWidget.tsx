@@ -10,7 +10,6 @@ export type SocialProofWidgetData = {
   id: string;
   widget_type: "purchases" | "memberships";
   title: string | null; // Optional field (max 50 chars)
-  message_start: string | null; // Optional field (max 200 chars)
   message_end: string | null; // Optional field (max 200 chars)
   cta_text: string | null; // Can be null when cta_type is "none"
   cta_type: "button" | "link" | "none";
@@ -307,8 +306,9 @@ const trackWidgetClick = async (widgetId: string) => {
       url: `/social_proof_widgets/${widgetId}/click`,
       accept: "json",
     });
-  } catch (_error) {
+  } catch (error) {
     // Track error silently - don't block user experience
+    console.warn('Social proof widget click tracking failed:', error);
   }
 };
 

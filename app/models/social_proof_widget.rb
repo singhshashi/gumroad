@@ -15,7 +15,7 @@ class SocialProofWidget < ApplicationRecord
 
   belongs_to :user
   has_and_belongs_to_many :links, join_table: "social_proof_widgets_links"
-  
+
   # Attribution relationships
   has_many :social_proof_widget_attributions, dependent: :destroy
   has_many :attributed_purchases, through: :social_proof_widget_attributions, source: :purchase
@@ -43,8 +43,8 @@ class SocialProofWidget < ApplicationRecord
   scope :universal, -> { where(universal: true) }
   scope :product_specific, -> { where(universal: false) }
   scope :enabled_widgets, -> { alive.enabled }
-  scope :purchases_widgets, -> { where(widget_type: 'purchases') }
-  scope :memberships_widgets, -> { where(widget_type: 'memberships') }
+  scope :purchases_widgets, -> { where(widget_type: "purchases") }
+  scope :memberships_widgets, -> { where(widget_type: "memberships") }
 
   attr_json_data_accessor :custom_image_url, default: -> { nil }
   attr_json_data_accessor :icon_name, default: -> { nil }
@@ -82,17 +82,16 @@ class SocialProofWidget < ApplicationRecord
   end
 
   def purchases_widget?
-    widget_type == 'purchases'
+    widget_type == "purchases"
   end
 
   def memberships_widget?
-    widget_type == 'memberships'
+    widget_type == "memberships"
   end
-
 
   def generate_widget_data_for_product(product)
     case widget_type
-    when 'purchases'
+    when "purchases"
       {
         title: title,
         message_end: message_end,
@@ -100,7 +99,7 @@ class SocialProofWidget < ApplicationRecord
         number: purchases_last_24h(product),
         number_text: "purchases in the last 24 hours"
       }
-    when 'memberships'
+    when "memberships"
       {
         title: title,
         message_end: message_end,
@@ -247,8 +246,6 @@ class SocialProofWidget < ApplicationRecord
       end
     end
 
-
-
     def custom_image_presence
       return unless custom_image?
 
@@ -264,5 +261,4 @@ class SocialProofWidget < ApplicationRecord
         errors.add(:icon_name, "must be present when using icon type")
       end
     end
-
 end
