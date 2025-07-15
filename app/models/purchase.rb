@@ -3855,6 +3855,6 @@ class Purchase < ApplicationRecord
     end
 
     def successful_purchase?
-      state_changed? && state.in?(Purchase::ALL_SUCCESS_STATES)
+      purchase_state_previously_changed? && purchase_state.in?(Purchase::ALL_SUCCESS_STATES)
     end
 end
