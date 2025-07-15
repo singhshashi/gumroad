@@ -143,7 +143,11 @@ export const Nav = (props: Props) => {
           text="Checkout"
           icon="cart3-fill"
           href={Routes.checkout_discounts_url(routeParams)}
-          additionalPatterns={[Routes.checkout_form_url(routeParams), Routes.checkout_upsells_url(routeParams)]}
+          additionalPatterns={[
+            Routes.checkout_form_url(routeParams),
+            Routes.checkout_upsells_url(routeParams),
+            Routes.checkout_social_proof_widgets_url(routeParams),
+          ]}
         />
         <NavLink
           text="Emails"
