@@ -40,4 +40,8 @@ class Checkout::SocialProofWidgetPolicy < ApplicationPolicy
   def publish?
     update?
   end
+
+  def unpublish?
+    update?
+  end
 end

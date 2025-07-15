@@ -55,7 +55,6 @@ class SocialProofWidget < ApplicationRecord
   SOCIAL_PROOF_COOKIE_NAME_PREFIX = "_gumroad_social_proof_"
 
   before_validation :set_defaults, on: :create
-  before_save :unpublish_if_content_changed
 
   def icon_type?
     image_type == "icon"
@@ -188,6 +187,10 @@ class SocialProofWidget < ApplicationRecord
     update!(published: true)
   end
 
+  def unpublish!
+    update!(published: false)
+  end
+
   def duplicate!
     duplicated_widget = self.class.new(
       user: user,
@@ -223,28 +226,6 @@ class SocialProofWidget < ApplicationRecord
       self.image_type ||= "none"
     end
 
-    def unpublish_if_content_changed
-      return if new_record?
-      return unless published?
-
-      # Define content fields that should trigger unpublishing when changed
-      content_fields = %w[
-        name widget_type title message_end cta_text cta_type image_type
-        custom_image_url icon_name icon_color universal
-      ]
-
-      # Check if any content fields have changed
-      content_changed = content_fields.any? { |field| changed.include?(field) }
-
-      # Check if link associations have changed (for non-universal widgets)
-      links_changed = changed.include?("universal") ||
-                     (respond_to?(:link_ids_changed?) && link_ids_changed?)
-
-      # Unpublish if content or links changed
-      if content_changed || links_changed
-        self.published = false
-      end
-    end
 
     def custom_image_presence
       return unless custom_image?

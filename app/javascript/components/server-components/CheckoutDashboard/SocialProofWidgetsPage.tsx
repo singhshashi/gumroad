@@ -8,6 +8,7 @@ import {
   updateSocialProofWidget,
   deleteSocialProofWidget,
   publishSocialProofWidget,
+  unpublishSocialProofWidget,
   duplicateSocialProofWidget,
   getPagedSocialProofWidgets,
   SocialProofWidgetPayload,
@@ -62,7 +63,6 @@ const IMAGE_TYPE_OPTIONS: ImageTypeOption[] = [
   { id: "icon", label: "Icon" },
 ];
 
-
 type Product = {
   id: string;
   name: string;
@@ -102,14 +102,17 @@ const WidgetActionsPopover = ({
   widget,
   onDuplicate,
   onDelete,
+  onPublishToggle,
 }: {
   widget: SocialProofWidget;
   onDuplicate: () => void;
   onDelete: () => void;
+  onPublishToggle: () => void;
 }) => {
   const [open, setOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isDuplicating, setIsDuplicating] = React.useState(false);
+  const [isPublishing, setIsPublishing] = React.useState(false);
   const [confirmingDelete, setConfirmingDelete] = React.useState(false);
 
   const handleDuplicate = async () => {
@@ -123,6 +126,26 @@ const WidgetActionsPopover = ({
       showAlert(e.message, "error");
     } finally {
       setIsDuplicating(false);
+      setOpen(false);
+    }
+  };
+
+  const handlePublishToggle = async () => {
+    setIsPublishing(true);
+    try {
+      if (widget.published) {
+        await unpublishSocialProofWidget(widget.id);
+        showAlert("Widget unpublished successfully", "success");
+      } else {
+        await publishSocialProofWidget(widget.id);
+        showAlert("Widget published successfully", "success");
+      }
+      onPublishToggle();
+    } catch (e) {
+      assertResponseError(e);
+      showAlert(e.message, "error");
+    } finally {
+      setIsPublishing(false);
       setOpen(false);
     }
   };
@@ -146,7 +169,18 @@ const WidgetActionsPopover = ({
     <>
       <Popover open={open} onToggle={setOpen} aria-label="Open widget action menu" trigger={<Icon name="three-dots" />}>
         <div role="menu">
-          <div role="menuitem" inert={!widget.can_update || isDuplicating} onClick={() => void handleDuplicate()}>
+          <div role="menuitem" inert={!widget.can_update || isPublishing} onClick={(e) => { e.stopPropagation(); void handlePublishToggle(); }}>
+            <Icon name={widget.published ? "x-circle" : "eye-fill"} />
+            &ensp;
+            {isPublishing
+              ? widget.published
+                ? "Unpublishing..."
+                : "Publishing..."
+              : widget.published
+                ? "Unpublish"
+                : "Publish"}
+          </div>
+          <div role="menuitem" inert={!widget.can_update || isDuplicating} onClick={(e) => { e.stopPropagation(); void handleDuplicate(); }}>
             <Icon name="outline-duplicate" />
             &ensp;{isDuplicating ? "Duplicating..." : "Duplicate"}
           </div>
@@ -154,7 +188,7 @@ const WidgetActionsPopover = ({
             className="danger"
             inert={!widget.can_destroy || isDeleting}
             role="menuitem"
-            onClick={() => setConfirmingDelete(true)}
+            onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true); }}
           >
             <Icon name="trash2" />
             &ensp;{isDeleting ? "Deleting..." : "Delete"}
@@ -168,10 +202,14 @@ const WidgetActionsPopover = ({
           title="Delete Widget"
           footer={
             <>
-              <Button onClick={() => setConfirmingDelete(false)} disabled={isDeleting || isDuplicating}>
+              <Button onClick={() => setConfirmingDelete(false)} disabled={isDeleting || isDuplicating || isPublishing}>
                 Cancel
               </Button>
-              <Button color="danger" onClick={() => void handleDelete()} disabled={isDeleting || isDuplicating}>
+              <Button
+                color="danger"
+                onClick={() => void handleDelete()}
+                disabled={isDeleting || isDuplicating || isPublishing}
+              >
                 {isDeleting ? "Deleting..." : "Confirm"}
               </Button>
             </>
@@ -348,6 +386,9 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
                         </button>
                         <WidgetActionsPopover
                           widget={widget}
+                          onPublishToggle={() => {
+                            loadWidgets(1, searchTerm);
+                          }}
                           onDuplicate={() => {
                             loadWidgets(1, searchTerm);
                           }}
@@ -462,7 +503,6 @@ const WidgetFormModal = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-
   const handleSave = asyncVoid(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -535,13 +575,18 @@ const WidgetFormModal = ({
         widgetId = newWidget.id;
       }
 
-      // Then publish
-      await publishSocialProofWidget(widgetId);
-      showAlert("Widget published successfully", "success");
+      // Then publish or unpublish based on current state
+      if (formData.published) {
+        await unpublishSocialProofWidget(widgetId);
+        showAlert("Widget unpublished successfully", "success");
+      } else {
+        await publishSocialProofWidget(widgetId);
+        showAlert("Widget published successfully", "success");
+      }
       onSave();
     } catch (e) {
       assertResponseError(e);
-      showAlert(`Failed to publish widget: ${e.message}`, "error");
+      showAlert(`Failed to ${formData.published ? "unpublish" : "publish"} widget: ${e.message}`, "error");
     } finally {
       setIsPublishing(false);
     }
@@ -664,7 +709,13 @@ const WidgetFormModal = ({
               }}
               disabled={isSubmitting || isPublishing}
             >
-              {isPublishing ? "Publishing..." : "Publish"}
+              {isPublishing
+                ? formData.published
+                  ? "Unpublishing..."
+                  : "Publishing..."
+                : formData.published
+                  ? "Unpublish"
+                  : "Publish"}
             </Button>
           </div>
         </header>

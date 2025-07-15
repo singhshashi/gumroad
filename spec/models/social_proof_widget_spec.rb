@@ -45,8 +45,8 @@ describe SocialProofWidget do
     let!(:deleted_widget) { create(:social_proof_widget, user: user, deleted_at: 1.day.ago) }
     let!(:universal_widget) { create(:social_proof_widget, user: user, universal: true) }
     let!(:product_specific_widget) { create(:social_proof_widget, user: user, universal: false) }
-    let!(:enabled_widget) { create(:social_proof_widget, user: user, enabled: true) }
-    let!(:disabled_widget) { create(:social_proof_widget, user: user, enabled: false) }
+    let!(:published_widget) { create(:social_proof_widget, user: user, published: true) }
+    let!(:unpublished_widget) { create(:social_proof_widget, user: user, published: false) }
     let!(:purchases_widget) { create(:social_proof_widget, user: user, widget_type: "purchases") }
     let!(:memberships_widget) { create(:social_proof_widget, user: user, widget_type: "memberships") }
 
@@ -71,11 +71,11 @@ describe SocialProofWidget do
       end
     end
 
-    describe ".enabled_widgets" do
-      it "returns alive and enabled widgets" do
-        expect(SocialProofWidget.enabled_widgets).to include(enabled_widget)
-        expect(SocialProofWidget.enabled_widgets).not_to include(disabled_widget)
-        expect(SocialProofWidget.enabled_widgets).not_to include(deleted_widget)
+    describe ".published_widgets" do
+      it "returns alive and published widgets" do
+        expect(SocialProofWidget.published_widgets).to include(published_widget)
+        expect(SocialProofWidget.published_widgets).not_to include(unpublished_widget)
+        expect(SocialProofWidget.published_widgets).not_to include(deleted_widget)
       end
     end
 
@@ -95,15 +95,15 @@ describe SocialProofWidget do
   end
 
   describe "flags" do
-    let(:widget) { create(:social_proof_widget, enabled: false) }
+    let(:widget) { create(:social_proof_widget, published: false) }
 
-    it "has enabled flag" do
-      expect(widget).to respond_to(:enabled?)
-      expect(widget).to respond_to(:enabled=)
+    it "has published flag" do
+      expect(widget).to respond_to(:published?)
+      expect(widget).to respond_to(:published=)
     end
 
-    it "defaults to disabled" do
-      expect(widget.enabled?).to be false
+    it "defaults to unpublished" do
+      expect(widget.published?).to be false
     end
   end
 
@@ -372,10 +372,18 @@ describe SocialProofWidget do
     end
 
     describe "#publish!" do
-      let(:widget) { create(:social_proof_widget, enabled: false) }
+      let(:widget) { create(:social_proof_widget, published: false) }
 
-      it "enables the widget" do
-        expect { widget.publish! }.to change { widget.reload.enabled? }.from(false).to(true)
+      it "publishes the widget" do
+        expect { widget.publish! }.to change { widget.reload.published? }.from(false).to(true)
+      end
+    end
+
+    describe "#unpublish!" do
+      let(:widget) { create(:social_proof_widget, published: true) }
+
+      it "unpublishes the widget" do
+        expect { widget.unpublish! }.to change { widget.reload.published? }.from(true).to(false)
       end
     end
 
@@ -389,7 +397,7 @@ describe SocialProofWidget do
         expect(duplicate.user).to eq(widget.user)
         expect(duplicate.widget_type).to eq(widget.widget_type)
         expect(duplicate.title).to eq(widget.title)
-        expect(duplicate.enabled?).to be false
+        expect(duplicate.published?).to be false
         expect(duplicate).to be_persisted
       end
 
@@ -425,8 +433,8 @@ describe SocialProofWidget do
       let(:product) { create(:product, user: user) }
 
       context "with product-specific widgets" do
-        let!(:product_widget) { create(:social_proof_widget, user: user, universal: false, enabled: true) }
-        let!(:universal_widget) { create(:social_proof_widget, user: user, universal: true, enabled: true) }
+        let!(:product_widget) { create(:social_proof_widget, user: user, universal: false, published: true) }
+        let!(:universal_widget) { create(:social_proof_widget, user: user, universal: true, published: true) }
 
         before do
           product_widget.links = [product]
@@ -440,7 +448,7 @@ describe SocialProofWidget do
       end
 
       context "without product-specific widgets" do
-        let!(:universal_widget) { create(:social_proof_widget, user: user, universal: true, enabled: true) }
+        let!(:universal_widget) { create(:social_proof_widget, user: user, universal: true, published: true) }
 
         it "returns limited universal widgets" do
           result = widget.widgets_for_product(product)
@@ -454,10 +462,10 @@ describe SocialProofWidget do
   describe "callbacks" do
     describe "before_validation :set_defaults" do
       context "on create" do
-        it "sets enabled to false by default" do
+        it "sets published to false by default" do
           widget = SocialProofWidget.new(user: user, name: "Test")
           widget.valid?
-          expect(widget.enabled).to be false
+          expect(widget.published).to be false
         end
 
         it "sets widget_type to purchases by default" do
@@ -489,46 +497,5 @@ describe SocialProofWidget do
       end
     end
 
-    describe "before_save :unpublish_if_content_changed" do
-      let(:widget) { create(:social_proof_widget, enabled: true, name: "Original") }
-
-      it "unpublishes when content fields change" do
-        widget.name = "Changed"
-        widget.save!
-        expect(widget.enabled?).to be false
-      end
-
-      it "unpublishes when widget_type changes" do
-        widget.widget_type = "memberships"
-        widget.save!
-        expect(widget.enabled?).to be false
-      end
-
-      it "unpublishes when universal flag changes" do
-        widget.universal = true
-        widget.save!
-        expect(widget.enabled?).to be false
-      end
-
-      it "does not unpublish when non-content fields change" do
-        widget.analytics_data = { "impressions" => 1 }
-        widget.save!
-        expect(widget.enabled?).to be true
-      end
-
-      it "does not affect new records" do
-        new_widget = build(:social_proof_widget, enabled: true, name: "New")
-        new_widget.name = "Changed"
-        new_widget.save!
-        expect(new_widget.enabled?).to be true
-      end
-
-      it "does not affect already disabled widgets" do
-        widget.update!(enabled: false)
-        widget.name = "Changed Again"
-        widget.save!
-        expect(widget.enabled?).to be false
-      end
-    end
   end
 end

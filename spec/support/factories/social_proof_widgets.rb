@@ -13,6 +13,6 @@ FactoryBot.define do
     icon_name { "cart3-fill" }
     icon_color { "#059669" }
     universal { false }
-    enabled { true }
+    published { false }
   end
 end

@@ -5,7 +5,7 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
 
   PER_PAGE = 10
 
-  before_action :set_widget, only: [:show, :update, :destroy, :publish, :duplicate]
+  before_action :set_widget, only: [:show, :update, :destroy, :publish, :unpublish, :duplicate]
   before_action :clean_params, only: [:create, :update]
   before_action :remove_published_from_update, only: [:update]
 
@@ -81,6 +81,16 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
     authorize [:checkout, @widget]
 
     @widget.publish!
+    @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
+    render json: { success: true, widget: @presenter.widget_props(@widget) }
+  rescue => e
+    render json: { success: false, error: e.message }
+  end
+
+  def unpublish
+    authorize [:checkout, @widget]
+
+    @widget.unpublish!
     @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
     render json: { success: true, widget: @presenter.widget_props(@widget) }
   rescue => e

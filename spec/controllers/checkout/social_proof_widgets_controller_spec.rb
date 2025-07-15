@@ -154,13 +154,13 @@ describe Checkout::SocialProofWidgetsController do
       expect(json_response).to have_key("widget")
     end
 
-    it "removes enabled from params" do
-      params_with_enabled = update_params.deep_merge(
-        social_proof_widget: { enabled: true }
+    it "removes published from params" do
+      params_with_published = update_params.deep_merge(
+        social_proof_widget: { published: true }
       )
 
-      patch :update, params: params_with_enabled, format: :json
-      expect(widget.reload.enabled?).to be false # Should not be updated
+      patch :update, params: params_with_published, format: :json
+      expect(widget.reload.published?).to be false # Should not be updated
     end
 
     context "with invalid params" do
@@ -207,15 +207,15 @@ describe Checkout::SocialProofWidgetsController do
   end
 
   describe "POST #publish" do
-    let(:disabled_widget) { create(:social_proof_widget, user: user, enabled: false) }
+    let(:unpublished_widget) { create(:social_proof_widget, user: user, published: false) }
 
-    it "enables the widget" do
-      post :publish, params: { id: disabled_widget.external_id }, format: :json
-      expect(disabled_widget.reload.enabled?).to be true
+    it "publishes the widget" do
+      post :publish, params: { id: unpublished_widget.external_id }, format: :json
+      expect(unpublished_widget.reload.published?).to be true
     end
 
     it "returns success JSON" do
-      post :publish, params: { id: disabled_widget.external_id }, format: :json
+      post :publish, params: { id: unpublished_widget.external_id }, format: :json
       expect(response).to have_http_status(:success)
 
       json_response = JSON.parse(response.body)
@@ -229,7 +229,40 @@ describe Checkout::SocialProofWidgetsController do
       end
 
       it "returns error JSON" do
-        post :publish, params: { id: disabled_widget.external_id }, format: :json
+        post :publish, params: { id: unpublished_widget.external_id }, format: :json
+        expect(response).to have_http_status(:success)
+
+        json_response = JSON.parse(response.body)
+        expect(json_response["success"]).to be false
+        expect(json_response["error"]).to eq("Test error")
+      end
+    end
+  end
+
+  describe "POST #unpublish" do
+    let(:published_widget) { create(:social_proof_widget, user: user, published: true) }
+
+    it "unpublishes the widget" do
+      post :unpublish, params: { id: published_widget.external_id }, format: :json
+      expect(published_widget.reload.published?).to be false
+    end
+
+    it "returns success JSON" do
+      post :unpublish, params: { id: published_widget.external_id }, format: :json
+      expect(response).to have_http_status(:success)
+
+      json_response = JSON.parse(response.body)
+      expect(json_response["success"]).to be true
+      expect(json_response).to have_key("widget")
+    end
+
+    context "when unpublish fails" do
+      before do
+        allow_any_instance_of(SocialProofWidget).to receive(:unpublish!).and_raise(StandardError, "Test error")
+      end
+
+      it "returns error JSON" do
+        post :unpublish, params: { id: published_widget.external_id }, format: :json
         expect(response).to have_http_status(:success)
 
         json_response = JSON.parse(response.body)

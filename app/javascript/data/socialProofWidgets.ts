@@ -204,6 +204,22 @@ export const publishSocialProofWidget = async (id: string) => {
   return responseData.widget;
 };
 
+export const unpublishSocialProofWidget = async (id: string) => {
+  const response = await request({
+    method: "POST",
+    accept: "json",
+    url: Routes.unpublish_checkout_social_proof_widget_path(id),
+  });
+
+  const responseData = cast<{ success: true; widget: SocialProofWidget } | { success: false; error: string }>(
+    await response.json(),
+  );
+
+  if (!responseData.success) throw new ResponseError(responseData.error);
+
+  return responseData.widget;
+};
+
 export const duplicateSocialProofWidget = async (id: string) => {
   const response = await request({
     method: "POST",
