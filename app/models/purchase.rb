@@ -90,7 +90,6 @@ class Purchase < ApplicationRecord
   belongs_to :merchant_account, optional: true
   has_many :comments, as: :commentable
   has_many :media_locations
-  has_one :social_proof_widget_attribution, dependent: :destroy
   has_one :processor_payment_intent
   has_one :commission_as_deposit, class_name: "Commission", foreign_key: :deposit_purchase_id
   has_one :commission_as_completion, class_name: "Commission", foreign_key: :completion_purchase_id
