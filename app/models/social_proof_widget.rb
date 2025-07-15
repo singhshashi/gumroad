@@ -132,24 +132,15 @@ class SocialProofWidget < ApplicationRecord
   end
 
   def increment_impression!
-    analytics_data = self.analytics_data || {}
-    analytics_data["impressions"] = (analytics_data["impressions"] || 0) + 1
-    self.analytics_data = analytics_data
-    save!
+    increment_analytics_counter("impressions")
   end
 
   def increment_click!
-    analytics_data = self.analytics_data || {}
-    analytics_data["clicks"] = (analytics_data["clicks"] || 0) + 1
-    self.analytics_data = analytics_data
-    save!
+    increment_analytics_counter("clicks")
   end
 
   def increment_close!
-    analytics_data = self.analytics_data || {}
-    analytics_data["closes"] = (analytics_data["closes"] || 0) + 1
-    self.analytics_data = analytics_data
-    save!
+    increment_analytics_counter("closes")
   end
 
   def conversion_rate
@@ -219,6 +210,14 @@ class SocialProofWidget < ApplicationRecord
   end
 
   private
+    def increment_analytics_counter(counter_name)
+      with_lock do
+        data = analytics_data || {}
+        data[counter_name] = (data[counter_name] || 0) + 1
+        update!(analytics_data: data)
+      end
+    end
+
     def set_defaults
       self.published = false if published.nil?
       self.widget_type ||= "purchases"
