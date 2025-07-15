@@ -1200,7 +1200,7 @@ class Link < ApplicationRecord
   end
 
   def social_proof_widgets_for_display
-    user_widgets = user.social_proof_widgets.alive.is_enabled
+    user_widgets = user.social_proof_widgets.alive.published
     product_specific_widgets = user_widgets.where(universal: false).joins(:links).where(links: { id: id })
     universal_widgets = user_widgets.where(universal: true)
 

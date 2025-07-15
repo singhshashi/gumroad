@@ -327,7 +327,7 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
                       {widget.analytics.attributed_revenue_formatted || "$0"}
                     </td>
                     <td style={{ width: "12%" }}>
-                      {widget.enabled ? (
+                      {widget.published ? (
                         <span style={{ color: "var(--success)" }}>Published</span>
                       ) : (
                         <span style={{ color: "var(--text-muted)" }}>Unpublished</span>
@@ -433,7 +433,7 @@ const WidgetFormModal = ({
     icon_name: SocialProofWidgetIconType;
     icon_color: string;
     custom_image_url: string;
-    enabled: boolean;
+    published: boolean;
     link_ids: string[];
   }>({
     name: widget?.name || "",
@@ -447,7 +447,7 @@ const WidgetFormModal = ({
     icon_name: widget?.icon_name || "flame-fill",
     icon_color: widget?.icon_color || "#14b8a6",
     custom_image_url: widget?.custom_image_url || "",
-    enabled: widget?.enabled ?? false,
+    published: widget?.published ?? false,
     link_ids: widget?.products?.map((p) => p.id) || [],
   });
 
@@ -477,7 +477,7 @@ const WidgetFormModal = ({
         cta_text: formData.cta_text,
         cta_type: formData.cta_type,
         image_type: formData.image_type,
-        enabled: formData.enabled,
+        published: formData.published,
         link_ids: formData.universal ? [] : formData.link_ids,
         ...(formData.image_type === "custom_image" &&
           formData.custom_image_url && { custom_image_url: formData.custom_image_url }),
@@ -518,7 +518,7 @@ const WidgetFormModal = ({
         cta_text: formData.cta_text,
         cta_type: formData.cta_type,
         image_type: formData.image_type,
-        enabled: formData.enabled,
+        published: formData.published,
         link_ids: formData.universal ? [] : formData.link_ids,
         ...(formData.image_type === "custom_image" &&
           formData.custom_image_url && { custom_image_url: formData.custom_image_url }),

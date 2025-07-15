@@ -8,7 +8,7 @@ class SocialProofWidget < ApplicationRecord
   include TimestampScopes
   include FlagShihTzu
 
-  has_flags 1 => :enabled,
+  has_flags 1 => :published,
             :column => "flags",
             :flag_query_mode => :bit_operator,
             check_for_column: false
@@ -42,7 +42,7 @@ class SocialProofWidget < ApplicationRecord
   scope :alive, -> { where(deleted_at: nil) }
   scope :universal, -> { where(universal: true) }
   scope :product_specific, -> { where(universal: false) }
-  scope :enabled_widgets, -> { alive.enabled }
+  scope :published_widgets, -> { alive.published }
   scope :purchases_widgets, -> { where(widget_type: "purchases") }
   scope :memberships_widgets, -> { where(widget_type: "memberships") }
 
@@ -111,7 +111,7 @@ class SocialProofWidget < ApplicationRecord
   end
 
   def widgets_for_product(product)
-    user_widgets = product.user.social_proof_widgets.enabled_widgets
+    user_widgets = product.user.social_proof_widgets.published_widgets
     universal_widgets = user_widgets.universal
     product_specific_widgets = user_widgets.product_specific.joins(:links).where(links: { id: product.id })
 
@@ -185,7 +185,7 @@ class SocialProofWidget < ApplicationRecord
   end
 
   def publish!
-    update!(enabled: true)
+    update!(published: true)
   end
 
   def duplicate!
@@ -202,7 +202,7 @@ class SocialProofWidget < ApplicationRecord
       custom_image_url: custom_image_url,
       icon_name: icon_name,
       icon_color: icon_color,
-      enabled: false
+      published: false
     )
 
     duplicated_widget.save!
@@ -217,7 +217,7 @@ class SocialProofWidget < ApplicationRecord
 
   private
     def set_defaults
-      self.enabled = false if enabled.nil?
+      self.published = false if published.nil?
       self.widget_type ||= "purchases"
       self.cta_type ||= "none"
       self.image_type ||= "none"
@@ -225,7 +225,7 @@ class SocialProofWidget < ApplicationRecord
 
     def unpublish_if_content_changed
       return if new_record?
-      return unless enabled?
+      return unless published?
 
       # Define content fields that should trigger unpublishing when changed
       content_fields = %w[
@@ -242,7 +242,7 @@ class SocialProofWidget < ApplicationRecord
 
       # Unpublish if content or links changed
       if content_changed || links_changed
-        self.enabled = false
+        self.published = false
       end
     end
 

@@ -16,7 +16,7 @@ export type SocialProofWidgetPayload = {
   custom_image_url?: string | null;
   icon_name?: SocialProofWidgetIconType | null;
   icon_color?: string | null;
-  enabled: boolean;
+  published: boolean;
   link_ids: string[];
 };
 
@@ -35,7 +35,7 @@ export type SocialProofWidget = {
   custom_image_url?: string | null;
   icon_name?: SocialProofWidgetIconType | null;
   icon_color?: string | null;
-  enabled: boolean;
+  published: boolean;
   products?:
     | {
         id: string;
@@ -77,7 +77,7 @@ export const createSocialProofWidget = async (payload: SocialProofWidgetPayload)
         custom_image_url: payload.custom_image_url,
         icon_name: payload.icon_name,
         icon_color: payload.icon_color,
-        enabled: payload.enabled,
+        published: payload.published,
         link_ids: payload.link_ids,
       },
     },
@@ -110,7 +110,7 @@ export const updateSocialProofWidget = async (id: string, payload: SocialProofWi
         custom_image_url: payload.custom_image_url,
         icon_name: payload.icon_name,
         icon_color: payload.icon_color,
-        enabled: payload.enabled,
+        published: payload.published,
         link_ids: payload.link_ids,
       },
     },

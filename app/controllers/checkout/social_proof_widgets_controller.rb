@@ -7,7 +7,7 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
 
   before_action :set_widget, only: [:show, :update, :destroy, :publish, :duplicate]
   before_action :clean_params, only: [:create, :update]
-  before_action :remove_enabled_from_update, only: [:update]
+  before_action :remove_published_from_update, only: [:update]
 
   def index
     authorize [:checkout, SocialProofWidget]
@@ -126,7 +126,7 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
         :custom_image_url,
         :icon_name,
         :icon_color,
-        :enabled,
+        :published,
         link_ids: []
       )
     end
@@ -146,8 +146,8 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
       params[:social_proof_widget][:icon_color] = nil if params[:social_proof_widget][:image_type] != "icon"
     end
 
-    def remove_enabled_from_update
-      # Remove enabled from params for updates - it should only be set via publish action
-      params[:social_proof_widget].delete(:enabled)
+    def remove_published_from_update
+      # Remove published from params for updates - it should only be set via publish action
+      params[:social_proof_widget].delete(:published)
     end
 end

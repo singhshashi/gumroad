@@ -45,7 +45,7 @@ class Checkout::SocialProofWidgetsPresenter
       custom_image_url: widget.custom_image_url,
       icon_name: widget.icon_name,
       icon_color: widget.icon_color,
-      enabled: widget.enabled?,
+      published: widget.published?,
       created_at: widget.created_at.iso8601,
       updated_at: widget.updated_at.iso8601,
       products: widget.universal? ? nil : widget.links.visible_and_not_archived.map do |product|

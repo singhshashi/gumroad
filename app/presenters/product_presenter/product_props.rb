@@ -178,7 +178,7 @@ class ProductPresenter::ProductProps
     def social_proof_widgets_props
       return [] unless product.user.social_proof_widgets.exists?
 
-      widgets = product.user.social_proof_widgets.enabled_widgets
+      widgets = product.user.social_proof_widgets.published_widgets
       universal_widgets = widgets.universal
       product_specific_widgets = widgets.product_specific.joins(:links).where(links: { id: product.id })
 
