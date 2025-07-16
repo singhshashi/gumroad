@@ -13,25 +13,23 @@ module SocialProofCookie
   end
 
   def fetch_social_proof_widget_from_cookies
-    widget_cookies = {}
-    cookies.each do |key, value|
-      if key.starts_with?(SocialProofWidget::SOCIAL_PROOF_COOKIE_NAME_PREFIX)
-        widget_cookies[key] = value
-      end
-    end
-    return nil if widget_cookies.empty?
-
-    # Get most recent cookie (highest timestamp)
-    latest_cookie = widget_cookies.max_by { |k, v| v.to_i }
-    external_id = latest_cookie[0].gsub(SocialProofWidget::SOCIAL_PROOF_COOKIE_NAME_PREFIX, "")
-
-    # URL decode the external_id in case it's URL encoded
-    external_id = CGI.unescape(external_id)
+    external_id, _ = extract_latest_social_proof_cookie_data
+    return nil if external_id.nil?
 
     SocialProofWidget.find_by_external_id(external_id)
   end
 
   def fetch_social_proof_widget_with_timestamp_from_cookies
+    external_id, cookie_timestamp = extract_latest_social_proof_cookie_data
+    return [nil, nil] if external_id.nil?
+
+    widget = SocialProofWidget.find_by_external_id(external_id)
+    [widget, cookie_timestamp]
+  end
+
+  private
+
+  def extract_latest_social_proof_cookie_data
     widget_cookies = {}
     cookies.each do |key, value|
       if key.starts_with?(SocialProofWidget::SOCIAL_PROOF_COOKIE_NAME_PREFIX)
@@ -48,7 +46,6 @@ module SocialProofCookie
     # URL decode the external_id in case it's URL encoded
     external_id = CGI.unescape(external_id)
 
-    widget = SocialProofWidget.find_by_external_id(external_id)
-    [widget, cookie_timestamp]
+    [external_id, cookie_timestamp]
   end
 end
