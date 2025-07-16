@@ -920,7 +920,7 @@ const WidgetFormModal = ({
                       } catch (error) {
                         // eslint-disable-next-line no-console
                         console.error("Failed to upload image:", error);
-                        // TODO: Show error to user
+                        showAlert("Failed to upload image. Please try again.", "error");
                       }
                     }}
                     onRemove={() => {

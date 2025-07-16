@@ -13,7 +13,7 @@ export type SocialProofWidgetData = {
   message_end: string | null; // Optional field (max 200 chars)
   cta_text: string | null; // Can be null when cta_type is "none"
   cta_type: "button" | "link" | "none";
-  image_type: string;
+  image_type: "product_thumbnail" | "custom_image" | "icon" | "none";
   custom_image_url?: string; // Only when image_type is "custom_image"
   icon_name?: SocialProofWidgetIconType; // Only when image_type is "icon"
   icon_color?: string; // Only when image_type is "icon"
