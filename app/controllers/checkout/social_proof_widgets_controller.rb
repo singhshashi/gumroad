@@ -83,7 +83,7 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
     @widget.publish!
     @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
     render json: { success: true, widget: @presenter.widget_props(@widget) }
-  rescue => e
+  rescue StandardError => e
     render json: { success: false, error: e.message }
   end
 
@@ -93,7 +93,7 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
     @widget.unpublish!
     @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
     render json: { success: true, widget: @presenter.widget_props(@widget) }
-  rescue => e
+  rescue StandardError => e
     render json: { success: false, error: e.message }
   end
 
@@ -103,7 +103,7 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
     duplicated_widget = @widget.duplicate!
     @presenter = Checkout::SocialProofWidgetsPresenter.new(pundit_user:)
     render json: { success: true, widget: @presenter.widget_props(duplicated_widget) }
-  rescue => e
+  rescue StandardError => e
     render json: { success: false, error: e.message }
   end
 
@@ -145,7 +145,7 @@ class Checkout::SocialProofWidgetsController < Sellers::BaseController
       # Convert external IDs to internal IDs for link_ids
       if params[:social_proof_widget][:link_ids].present?
         external_ids = params[:social_proof_widget][:link_ids].compact_blank
-        internal_ids = pundit_user.user.links.by_external_ids(external_ids).pluck(:id)
+        internal_ids = pundit_user.links.by_external_ids(external_ids).pluck(:id)
         params[:social_proof_widget][:link_ids] = internal_ids
       else
         params[:social_proof_widget][:link_ids] = []
