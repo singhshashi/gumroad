@@ -169,7 +169,14 @@ const WidgetActionsPopover = ({
     <>
       <Popover open={open} onToggle={setOpen} aria-label="Open widget action menu" trigger={<Icon name="three-dots" />}>
         <div role="menu">
-          <div role="menuitem" inert={!widget.can_update || isPublishing} onClick={(e) => { e.stopPropagation(); void handlePublishToggle(); }}>
+          <div
+            role="menuitem"
+            inert={!widget.can_update || isPublishing}
+            onClick={(e) => {
+              e.stopPropagation();
+              void handlePublishToggle();
+            }}
+          >
             <Icon name={widget.published ? "x-circle" : "eye-fill"} />
             &ensp;
             {isPublishing
@@ -180,7 +187,14 @@ const WidgetActionsPopover = ({
                 ? "Unpublish"
                 : "Publish"}
           </div>
-          <div role="menuitem" inert={!widget.can_update || isDuplicating} onClick={(e) => { e.stopPropagation(); void handleDuplicate(); }}>
+          <div
+            role="menuitem"
+            inert={!widget.can_update || isDuplicating}
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleDuplicate();
+            }}
+          >
             <Icon name="outline-duplicate" />
             &ensp;{isDuplicating ? "Duplicating..." : "Duplicate"}
           </div>
@@ -188,7 +202,10 @@ const WidgetActionsPopover = ({
             className="danger"
             inert={!widget.can_destroy || isDeleting}
             role="menuitem"
-            onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmingDelete(true);
+            }}
           >
             <Icon name="trash2" />
             &ensp;{isDeleting ? "Deleting..." : "Delete"}
@@ -774,9 +791,7 @@ const WidgetFormModal = ({
             <section>
               <header>
                 <h3>Message</h3>
-                <p>
-                  Create a simple message that will encourage customers to purchase your product.
-                </p>
+                <p>Create a simple message that will encourage customers to purchase your product.</p>
               </header>
 
               <fieldset>

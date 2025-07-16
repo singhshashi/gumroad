@@ -7,10 +7,10 @@ describe SocialProofWidget do
   let(:product) { create(:product, user: user) }
 
   describe "associations" do
-    it { should belong_to(:user) }
-    it { should have_and_belong_to_many(:links).join_table("social_proof_widgets_links") }
-    it { should have_many(:social_proof_widget_attributions).dependent(:destroy) }
-    it { should have_many(:attributed_purchases).through(:social_proof_widget_attributions).source(:purchase) }
+    it { is_expected.to belong_to(:user) }
+    it { is_expected.to have_and_belong_to_many(:links).join_table("social_proof_widgets_links") }
+    it { is_expected.to have_many(:social_proof_widget_attributions).dependent(:destroy) }
+    it { is_expected.to have_many(:attributed_purchases).through(:social_proof_widget_attributions).source(:purchase) }
   end
 
   describe "validations" do
