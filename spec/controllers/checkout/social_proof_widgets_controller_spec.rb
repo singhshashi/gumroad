@@ -92,6 +92,99 @@ describe Checkout::SocialProofWidgetsController do
       expect(json_response).to have_key("widget")
     end
 
+    context "with link_ids parameter" do
+      let(:link1) { create(:product, user: user) }
+      let(:link2) { create(:product, user: user) }
+      let(:params_with_link_ids) do
+        {
+          social_proof_widget: {
+            name: "New Widget with Links",
+            widget_type: "purchases",
+            cta_type: "button",
+            image_type: "icon",
+            icon_name: "flame-fill",
+            universal: false,
+            link_ids: [link1.external_id, link2.external_id]
+          }
+        }
+      end
+
+      it "creates widget with associated links" do
+        post :create, params: params_with_link_ids, format: :json
+        expect(response).to have_http_status(:success)
+        
+        widget = SocialProofWidget.last
+        expect(widget.link_ids).to contain_exactly(link1.id, link2.id)
+      end
+
+      it "converts external IDs to internal IDs" do
+        expect do
+          post :create, params: params_with_link_ids, format: :json
+        end.to change(SocialProofWidget, :count).by(1)
+        
+        widget = SocialProofWidget.last
+        expect(widget.link_ids).to contain_exactly(link1.id, link2.id)
+        expect(widget.link_ids).not_to include(link1.external_id)
+        expect(widget.link_ids).not_to include(link2.external_id)
+      end
+
+      it "handles empty link_ids array" do
+        empty_link_params = params_with_link_ids.deep_merge(
+          social_proof_widget: { link_ids: [] }
+        )
+        
+        post :create, params: empty_link_params, format: :json
+        expect(response).to have_http_status(:success)
+        
+        widget = SocialProofWidget.last
+        expect(widget.link_ids).to be_empty
+      end
+
+      it "handles nil link_ids" do
+        nil_link_params = params_with_link_ids.deep_merge(
+          social_proof_widget: { link_ids: nil }
+        )
+        
+        post :create, params: nil_link_params, format: :json
+        expect(response).to have_http_status(:success)
+        
+        widget = SocialProofWidget.last
+        expect(widget.link_ids).to be_empty
+      end
+
+      it "ignores invalid external IDs" do
+        invalid_params = params_with_link_ids.deep_merge(
+          social_proof_widget: { 
+            link_ids: [link1.external_id, "invalid-id", link2.external_id] 
+          }
+        )
+        
+        post :create, params: invalid_params, format: :json
+        expect(response).to have_http_status(:success)
+        
+        widget = SocialProofWidget.last
+        expect(widget.link_ids).to contain_exactly(link1.id, link2.id)
+      end
+
+      it "only includes links owned by the current user" do
+        other_user = create(:user)
+        other_link = create(:product, user: other_user)
+        
+        mixed_params = params_with_link_ids.deep_merge(
+          social_proof_widget: { 
+            link_ids: [link1.external_id, other_link.external_id] 
+          }
+        )
+        
+        post :create, params: mixed_params, format: :json
+        expect(response).to have_http_status(:success)
+        
+        widget = SocialProofWidget.last
+        expect(widget.link_ids).to contain_exactly(link1.id)
+        expect(widget.link_ids).not_to include(other_link.id)
+      end
+    end
+
     context "with invalid params" do
       let(:invalid_params) do
         {
@@ -161,6 +254,54 @@ describe Checkout::SocialProofWidgetsController do
 
       patch :update, params: params_with_published, format: :json
       expect(widget.reload.published?).to be false # Should not be updated
+    end
+
+    context "with link_ids parameter" do
+      let(:link1) { create(:product, user: user) }
+      let(:link2) { create(:product, user: user) }
+      let(:update_params_with_links) do
+        {
+          id: widget.external_id,
+          social_proof_widget: {
+            name: "Updated Widget with Links",
+            widget_type: "purchases",
+            cta_type: "button",
+            image_type: "icon",
+            icon_name: "flame-fill",
+            link_ids: [link1.external_id, link2.external_id]
+          }
+        }
+      end
+
+      it "updates widget with associated links" do
+        patch :update, params: update_params_with_links, format: :json
+        expect(response).to have_http_status(:success)
+        
+        widget.reload
+        expect(widget.link_ids).to contain_exactly(link1.id, link2.id)
+      end
+
+      it "converts external IDs to internal IDs during update" do
+        patch :update, params: update_params_with_links, format: :json
+        expect(response).to have_http_status(:success)
+        
+        widget.reload
+        expect(widget.link_ids).to contain_exactly(link1.id, link2.id)
+        expect(widget.link_ids).not_to include(link1.external_id)
+        expect(widget.link_ids).not_to include(link2.external_id)
+      end
+
+      it "handles empty link_ids array during update" do
+        empty_update_params = update_params_with_links.deep_merge(
+          social_proof_widget: { link_ids: [] }
+        )
+        
+        patch :update, params: empty_update_params, format: :json
+        expect(response).to have_http_status(:success)
+        
+        widget.reload
+        expect(widget.link_ids).to be_empty
+      end
     end
 
     context "with invalid params" do

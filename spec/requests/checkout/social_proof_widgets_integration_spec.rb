@@ -46,9 +46,9 @@ describe "Social Proof Widgets Dashboard", js: true, type: :feature do
   end
 
   describe "widgets list view" do
-    let!(:widget1) { create(:social_proof_widget, user: seller, name: "Purchase Widget", enabled: true) }
-    let!(:widget2) { create(:social_proof_widget, user: seller, name: "Review Widget", enabled: false) }
-    let!(:universal_widget) { create(:social_proof_widget, user: seller, name: "Universal Widget", universal: true) }
+    let!(:widget1) { create(:social_proof_widget, user: seller, name: "Purchase Widget", published: true) }
+    let!(:widget2) { create(:social_proof_widget, user: seller, name: "Review Widget", published: false) }
+    let!(:universal_widget) { create(:social_proof_widget, user: seller, name: "Universal Widget", universal: true, published: true) }
 
     before do
       visit checkout_social_proof_widgets_path
