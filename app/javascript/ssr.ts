@@ -32,6 +32,7 @@ import BalancePage from "$app/components/server-components/BalancePage";
 import BundleEditPage from "$app/components/server-components/BundleEditPage";
 import DiscountsPage from "$app/components/server-components/CheckoutDashboard/DiscountsPage";
 import FormPage from "$app/components/server-components/CheckoutDashboard/FormPage";
+import SocialProofWidgetsPage from "$app/components/server-components/CheckoutDashboard/SocialProofWidgetsPage";
 import UpsellsPage from "$app/components/server-components/CheckoutDashboard/UpsellsPage";
 import CheckoutPage from "$app/components/server-components/CheckoutPage";
 import CollaboratorsPage from "$app/components/server-components/CollaboratorsPage";
@@ -87,7 +88,6 @@ import PaymentsSettingsPage from "$app/components/server-components/Settings/Pay
 import TeamSettingsPage from "$app/components/server-components/Settings/TeamPage";
 import ThirdPartyAnalyticsSettingsPage from "$app/components/server-components/Settings/ThirdPartyAnalyticsPage";
 import SignupPage from "$app/components/server-components/SignupPage";
-import SocialProofWidgetsPage from "$app/components/server-components/CheckoutDashboard/SocialProofWidgetsPage";
 import SubscribePage from "$app/components/server-components/SubscribePage";
 import SubscribePreview from "$app/components/server-components/SubscribePreview";
 import SubscriptionManager from "$app/components/server-components/SubscriptionManager";

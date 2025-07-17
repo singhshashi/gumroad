@@ -520,24 +520,21 @@ const WidgetFormModal = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const createPayload = (data: typeof formData): SocialProofWidgetPayload => {
-    return {
-      name: data.name,
-      universal: data.universal,
-      widget_type: data.widget_type,
-      title: data.title,
-      message_end: data.message_end,
-      cta_text: data.cta_text,
-      cta_type: data.cta_type,
-      image_type: data.image_type,
-      published: data.published,
-      link_ids: data.universal ? [] : data.link_ids,
-      ...(data.image_type === "custom_image" &&
-        data.custom_image_url && { custom_image_url: data.custom_image_url }),
-      ...(data.image_type === "icon" && { icon_name: data.icon_name }),
-      ...(data.image_type === "icon" && { icon_color: data.icon_color }),
-    };
-  };
+  const createPayload = (data: typeof formData): SocialProofWidgetPayload => ({
+    name: data.name,
+    universal: data.universal,
+    widget_type: data.widget_type,
+    title: data.title,
+    message_end: data.message_end,
+    cta_text: data.cta_text,
+    cta_type: data.cta_type,
+    image_type: data.image_type,
+    published: data.published,
+    link_ids: data.universal ? [] : data.link_ids,
+    ...(data.image_type === "custom_image" && data.custom_image_url && { custom_image_url: data.custom_image_url }),
+    ...(data.image_type === "icon" && { icon_name: data.icon_name }),
+    ...(data.image_type === "icon" && { icon_color: data.icon_color }),
+  });
 
   const handleSave = asyncVoid(async (e: React.FormEvent) => {
     e.preventDefault();

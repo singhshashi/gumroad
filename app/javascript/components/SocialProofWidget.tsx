@@ -154,10 +154,10 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
 
     if (widget.cta_type === "button") {
       return (
-        <Button 
-          onClick={handleAction} 
-          color="success" 
-          small 
+        <Button
+          onClick={handleAction}
+          color="success"
+          small
           className="widget-cta-button"
           style={{ width: "100%", boxSizing: "border-box" }}
         >
@@ -201,9 +201,9 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         lineHeight: "1.4",
       }}
     >
-      <button 
-        onClick={handleClose} 
-        className="social-proof-widget__close" 
+      <button
+        onClick={handleClose}
+        className="social-proof-widget__close"
         aria-label="Close"
         style={{
           position: "absolute",
@@ -220,7 +220,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         <Icon name="x" />
       </button>
 
-      <div 
+      <div
         className="social-proof-widget__content"
         style={{
           display: "flex",
@@ -228,7 +228,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
           gap: "12px",
         }}
       >
-        <div 
+        <div
           style={{
             display: "flex",
             gap: "12px",
@@ -237,7 +237,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         >
           {renderImage()}
 
-          <div 
+          <div
             className="social-proof-widget__text"
             style={{
               flex: "1",
@@ -246,7 +246,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
             }}
           >
             {processedContent.title ? (
-              <h4 
+              <h4
                 className="social-proof-widget__title"
                 style={{
                   margin: "0 0 4px 0",
@@ -260,7 +260,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
             ) : null}
 
             {processedContent.description ? (
-              <p 
+              <p
                 className="social-proof-widget__description"
                 style={{
                   margin: "0",
@@ -276,11 +276,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
           </div>
         </div>
 
-        {widget.cta_type === "button" && (
-          <div style={{ width: "100%", boxSizing: "border-box" }}>
-            {renderCTA()}
-          </div>
-        )}
+        {widget.cta_type === "button" && <div style={{ width: "100%", boxSizing: "border-box" }}>{renderCTA()}</div>}
       </div>
     </div>
   );
@@ -306,9 +302,8 @@ const trackWidgetClick = async (widgetId: string) => {
       url: `/social_proof_widgets/${widgetId}/click`,
       accept: "json",
     });
-  } catch (error) {
+  } catch (_error) {
     // Track error silently - don't block user experience
-    console.warn('Social proof widget click tracking failed:', error);
   }
 };
 
