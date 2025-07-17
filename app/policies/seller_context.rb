@@ -18,4 +18,9 @@ class SellerContext
   def social_proof_widgets
     user&.social_proof_widgets
   end
+
+  # Delegate links to the user
+  def links
+    user&.links
+  end
 end

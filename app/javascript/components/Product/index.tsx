@@ -598,11 +598,26 @@ export const Product = ({
         <SocialProofWidgetContainer
           widgets={product.social_proof_widgets}
           productData={
-            product.social_proof_widgets[0]?.product_data || {
-              sales_count: product.sales_count || 0,
-              members_count: 0,
-              ...(product.covers[0]?.thumbnail && { thumbnail_url: product.covers[0].thumbnail }),
-            }
+            product.social_proof_widgets[0]?.product_data
+              ? {
+                  sales_count: product.social_proof_widgets[0].product_data.sales_count,
+                  members_count: product.social_proof_widgets[0].product_data.members_count,
+                  ...(() => {
+                    const thumbnailUrl =
+                      product.social_proof_widgets[0].product_data.thumbnail_url || 
+                      product.covers.find(cover => cover.id === product.main_cover_id)?.url || 
+                      product.covers[0]?.url;
+                    return thumbnailUrl ? { thumbnail_url: thumbnailUrl } : {};
+                  })(),
+                }
+              : {
+                  sales_count: product.sales_count || 0,
+                  members_count: 0,
+                  ...(() => {
+                    const thumbnailUrl = product.covers.find(cover => cover.id === product.main_cover_id)?.url || product.covers[0]?.url;
+                    return thumbnailUrl ? { thumbnail_url: thumbnailUrl } : {};
+                  })(),
+                }
           }
           onAction={() => {
             ctaButtonRef?.current?.click();

@@ -108,8 +108,20 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
       return <img src={widget.custom_image_url} alt="" className="widget-image" />;
     }
 
-    if (widget.image_type === "product_thumbnail" && productData?.thumbnail_url) {
-      return <img src={productData.thumbnail_url} alt="" className="widget-image" />;
+    if (widget.image_type === "product_thumbnail") {
+      const thumbnailUrl = productData?.thumbnail_url;
+      if (thumbnailUrl) {
+        return <img src={thumbnailUrl} alt="" className="widget-image" />;
+      }
+      
+      // Additional fallback: try widget's own product_data
+      if (widget.product_data?.thumbnail_url) {
+        return <img src={widget.product_data.thumbnail_url} alt="" className="widget-image" />;
+      }
+      
+      // If no product thumbnail available, return null
+      // The widget will still render without an image
+      return null;
     }
 
     if (widget.image_type === "icon" && widget.icon_name) {
