@@ -102,17 +102,14 @@ const WidgetActionsPopover = ({
   widget,
   onDuplicate,
   onDelete,
-  onPublishToggle,
 }: {
   widget: SocialProofWidget;
   onDuplicate: () => void;
   onDelete: () => void;
-  onPublishToggle: () => void;
 }) => {
   const [open, setOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isDuplicating, setIsDuplicating] = React.useState(false);
-  const [isPublishing, setIsPublishing] = React.useState(false);
   const [confirmingDelete, setConfirmingDelete] = React.useState(false);
 
   const handleDuplicate = async () => {
@@ -126,26 +123,6 @@ const WidgetActionsPopover = ({
       showAlert(e.message, "error");
     } finally {
       setIsDuplicating(false);
-      setOpen(false);
-    }
-  };
-
-  const handlePublishToggle = async () => {
-    setIsPublishing(true);
-    try {
-      if (widget.published) {
-        await unpublishSocialProofWidget(widget.id);
-        showAlert("Widget unpublished successfully", "success");
-      } else {
-        await publishSocialProofWidget(widget.id);
-        showAlert("Widget published successfully", "success");
-      }
-      onPublishToggle();
-    } catch (e) {
-      assertResponseError(e);
-      showAlert(e.message, "error");
-    } finally {
-      setIsPublishing(false);
       setOpen(false);
     }
   };
@@ -169,24 +146,6 @@ const WidgetActionsPopover = ({
     <>
       <Popover open={open} onToggle={setOpen} aria-label="Open widget action menu" trigger={<Icon name="three-dots" />}>
         <div role="menu">
-          <div
-            role="menuitem"
-            inert={!widget.can_update || isPublishing}
-            onClick={(e) => {
-              e.stopPropagation();
-              void handlePublishToggle();
-            }}
-          >
-            <Icon name={widget.published ? "x-circle" : "eye-fill"} />
-            &ensp;
-            {isPublishing
-              ? widget.published
-                ? "Unpublishing..."
-                : "Publishing..."
-              : widget.published
-                ? "Unpublish"
-                : "Publish"}
-          </div>
           <div
             role="menuitem"
             inert={!widget.can_update || isDuplicating}
@@ -219,13 +178,13 @@ const WidgetActionsPopover = ({
           title="Delete Widget"
           footer={
             <>
-              <Button onClick={() => setConfirmingDelete(false)} disabled={isDeleting || isDuplicating || isPublishing}>
+              <Button onClick={() => setConfirmingDelete(false)} disabled={isDeleting || isDuplicating}>
                 Cancel
               </Button>
               <Button
                 color="danger"
                 onClick={() => void handleDelete()}
-                disabled={isDeleting || isDuplicating || isPublishing}
+                disabled={isDeleting || isDuplicating}
               >
                 {isDeleting ? "Deleting..." : "Confirm"}
               </Button>
@@ -403,9 +362,6 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
                         </button>
                         <WidgetActionsPopover
                           widget={widget}
-                          onPublishToggle={() => {
-                            loadWidgets(1, searchTerm);
-                          }}
                           onDuplicate={() => {
                             loadWidgets(1, searchTerm);
                           }}
@@ -455,11 +411,17 @@ const SocialProofWidgetsPage = ({ widgets, products, pagination, pages }: Social
         setView("list");
         setSelectedWidgetId(null);
       }}
-      onSave={() => {
-        // Refresh the widgets list after successful save
-        loadWidgets(1, searchTerm);
-        setSelectedWidgetId(null);
-        setView("list");
+      onSave={(newWidget?: SocialProofWidget) => {
+        if (newWidget) {
+          // For newly created widgets, transition to edit mode
+          setEditingWidget(newWidget);
+          setView("edit");
+        } else {
+          // For existing widgets or publish actions, go back to list
+          loadWidgets(1, searchTerm);
+          setSelectedWidgetId(null);
+          setView("list");
+        }
       }}
     />
   );
@@ -477,7 +439,7 @@ const WidgetFormModal = ({
   products: Product[];
   view: "create" | "edit";
   onClose: () => void;
-  onSave: () => void;
+  onSave: (newWidget?: SocialProofWidget) => void;
 }) => {
   const [formData, setFormData] = React.useState<{
     name: string;
@@ -545,13 +507,16 @@ const WidgetFormModal = ({
 
       if (widget) {
         await updateSocialProofWidget(widget.id, payload);
-        showAlert("Widget saved as draft", "success");
+        showAlert("Widget saved", "success");
       } else {
-        await createSocialProofWidget(payload);
-        showAlert("Widget created as draft", "success");
+        const newWidget = await createSocialProofWidget(payload);
+        showAlert("Widget created", "success");
+        // Transition to edit mode for newly created widget
+        onSave(newWidget);
+        return;
       }
 
-      onSave();
+      // Don't call onSave() here - stay on the same page when saving existing widgets
     } catch (e) {
       assertResponseError(e);
       const message = view === "edit" ? "Failed to save widget" : "Failed to create widget";
