@@ -113,12 +113,12 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
       if (thumbnailUrl) {
         return <img src={thumbnailUrl} alt="" className="widget-image" />;
       }
-      
+
       // Additional fallback: try widget's own product_data
       if (widget.product_data?.thumbnail_url) {
         return <img src={widget.product_data.thumbnail_url} alt="" className="widget-image" />;
       }
-      
+
       // If no product thumbnail available, return null
       // The widget will still render without an image
       return null;
@@ -205,11 +205,11 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         backgroundColor: "white",
         border: "1px solid #e5e7eb",
         borderRadius: "8px",
-        padding: "12px",
+        padding: "16px",
         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
         position: "relative",
         maxWidth: "320px",
-        fontSize: "14px",
+        fontSize: "12px",
         lineHeight: "1.4",
       }}
     >
@@ -237,13 +237,13 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "12px",
+          gap: "16px",
         }}
       >
         <div
           style={{
             display: "flex",
-            gap: "12px",
+            gap: "16px",
             alignItems: "flex-start",
           }}
         >
@@ -262,7 +262,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
                 className="social-proof-widget__title"
                 style={{
                   margin: "0 0 4px 0",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   color: "#111827",
                 }}
@@ -276,7 +276,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
                 className="social-proof-widget__description"
                 style={{
                   margin: "0",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   color: "#374151",
                 }}
               >
