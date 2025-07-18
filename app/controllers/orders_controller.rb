@@ -99,7 +99,7 @@ class OrdersController < ApplicationController
         # Individual purchase params
         line_items: [:uid, :permalink, :perceived_price_cents, :price_range, :offer_code_name, :discount_code, :is_preorder, :quantity, :call_start_time,
                      :was_product_recommended, :recommended_by, :referrer, :is_rental, :is_multi_buy,
-                     :was_discover_fee_charged, :price_cents, :tax_cents, :gumroad_tax_cents, :shipping_cents, :price_id, :affiliate_id, :social_proof_widget_id, :url_parameters, :is_purchasing_power_parity_discounted,
+                     :was_discover_fee_charged, :price_cents, :tax_cents, :gumroad_tax_cents, :shipping_cents, :price_id, :affiliate_id, :social_proof_widget_id, :social_proof_cookie_set_at, :url_parameters, :is_purchasing_power_parity_discounted,
                      :recommender_model_name, :tip_cents, :pay_in_installments,
                      custom_fields: [:id, :value], variants: [], perceived_free_trial_duration: [:unit, :amount], accepted_offer: [:id, :original_variant_id, :original_product_id],
                      bundle_products: [:product_id, :variant_id, :quantity, custom_fields: [:id, :value]]])
