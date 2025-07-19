@@ -12,7 +12,7 @@ class ProductPresenter::ProductProps
     @seller = product.user
   end
 
-  def props(seller_custom_domain_url:, request:, pundit_user:, recommended_by: nil, discount_code: nil, quantity: 1, layout: nil)
+  def props(seller_custom_domain_url:, request:, pundit_user:, recommended_by: nil, discount_code: nil, quantity: 1, layout: nil, preview_widget: nil, preview_data: nil)
     {
       product: {
         id: product.external_id,
@@ -67,16 +67,14 @@ class ProductPresenter::ProductProps
         bundle_products: product.bundle_products.in_order.includes(:product, :variant).alive.map { bundle_product_props(_1, request:, recommended_by:, layout:) },
         public_files: product.alive_public_files.attached.map { PublicFilePresenter.new(public_file: _1).props },
         audio_previews_enabled: Feature.active?(:audio_previews, product.user),
-        social_proof_widgets: social_proof_widgets_props,
+        social_proof_widgets: social_proof_widgets_props(preview_widget, preview_data, pundit_user),
       },
       discount_code: discount_code_props(discount_code, quantity),
       purchase: purchase_props(product.purchase_info_for_product_page(pundit_user&.user, request.cookie_jar[:_gumroad_guid])),
       wishlists: pundit_user&.seller.present? ? (
         pundit_user.seller.wishlists.alive.includes(:alive_wishlist_products).map { |wishlist| WishlistPresenter.new(wishlist:).listing_props(product:) }
       ) : [],
-    }.tap do |props|
-      Rails.logger.info "[SOCIAL_PROOF_WIDGETS] Final props includes social_proof_widgets: #{props[:social_proof_widgets]&.length || 0} widgets"
-    end
+    }
   end
 
   private
@@ -175,7 +173,12 @@ class ProductPresenter::ProductProps
       end
     end
 
-    def social_proof_widgets_props
+    def social_proof_widgets_props(preview_widget = nil, preview_data = nil, pundit_user = nil)
+      # Handle preview mode
+      if preview_widget.present?
+        return handle_preview_widget(preview_widget, preview_data, pundit_user)
+      end
+
       return [] unless product.user.social_proof_widgets.exists?
 
       widgets = product.user.social_proof_widgets.published_widgets
@@ -185,8 +188,6 @@ class ProductPresenter::ProductProps
       # Get union of both universal and product-specific widgets, then randomly select one
       all_available_widgets = (universal_widgets.to_a + product_specific_widgets.to_a).uniq
       selected_widgets = all_available_widgets.any? ? [all_available_widgets.sample] : []
-
-      Rails.logger.info "[SOCIAL_PROOF_WIDGETS] Product #{product.id} (#{product.name}) - Available widgets: #{all_available_widgets.count} (#{all_available_widgets.map(&:name).join(', ')}) - Selected: #{selected_widgets.count} (#{selected_widgets.map(&:name).join(', ')})"
 
       # Get the real product data context (simplified - no template variables)
       product_data = {
@@ -226,6 +227,106 @@ class ProductPresenter::ProductProps
         end
 
         widget_data
+      end
+    end
+
+    def handle_preview_widget(preview_widget, preview_data, pundit_user)
+      # For existing widgets, find the widget and check authorization
+      if preview_widget != 'new'
+        widget = product.user.social_proof_widgets.find_by_external_id(preview_widget)
+        return [] if widget.blank?
+
+        # Check if user owns the widget
+        widget_owner_check = pundit_user&.user == widget.user
+        return [] unless widget_owner_check
+
+        # Use the existing widget data
+        widget_data_from_model = widget.generate_widget_data_for_product(product)
+
+        product_data = {
+          sales_count: product.successful_sales_count || 0,
+          members_count: product.subscriptions.active.count || 0,
+        }
+
+        if product.thumbnail&.url
+          product_data[:thumbnail_url] = product.thumbnail.url
+        end
+
+        widget_data = {
+          id: widget.external_id,
+          widget_type: widget.widget_type,
+          title: widget_data_from_model[:title],
+          message_end: widget_data_from_model[:message_end],
+          cta_text: widget_data_from_model[:cta_text],
+          cta_type: widget.cta_type,
+          image_type: widget.image_type,
+          number: widget_data_from_model[:number],
+          number_text: widget_data_from_model[:number_text],
+          product_data: product_data,
+          preview_mode: true
+        }
+
+        # Only include custom_image_url when image_type is "custom_image"
+        if widget.image_type == "custom_image" && widget.custom_image_url.present?
+          widget_data[:custom_image_url] = widget.custom_image_url
+        end
+
+        # Only include icon fields when image_type is "icon"
+        if widget.image_type == "icon"
+          widget_data[:icon_name] = widget.icon_name if widget.icon_name.present?
+          widget_data[:icon_color] = widget.icon_color if widget.icon_color.present?
+        end
+
+        return [widget_data]
+      end
+
+      # For new widgets, use the preview data
+      return [] if preview_data.blank?
+
+      begin
+        parsed_data = JSON.parse(preview_data)
+
+        # Check if user owns the product for authorization
+        product_owner_check = pundit_user&.user == product.user
+        return [] unless product_owner_check
+
+        product_data = {
+          sales_count: product.successful_sales_count || 0,
+          members_count: product.subscriptions.active.count || 0,
+        }
+
+        if product.thumbnail&.url
+          product_data[:thumbnail_url] = product.thumbnail.url
+        end
+
+        widget_data = {
+          id: 'preview-widget',
+          widget_type: parsed_data['widget_type'],
+          title: parsed_data['title'],
+          message_end: parsed_data['message_end'],
+          cta_text: parsed_data['cta_text'],
+          cta_type: parsed_data['cta_type'],
+          image_type: parsed_data['image_type'],
+          number: parsed_data['number'],
+          number_text: parsed_data['number_text'],
+          product_data: product_data,
+          preview_mode: true
+        }
+
+        # Only include custom_image_url when image_type is "custom_image"
+        if parsed_data['image_type'] == "custom_image" && parsed_data['custom_image_url'].present?
+          widget_data[:custom_image_url] = parsed_data['custom_image_url']
+        end
+
+        # Only include icon fields when image_type is "icon"
+        if parsed_data['image_type'] == "icon"
+          widget_data[:icon_name] = parsed_data['icon_name'] if parsed_data['icon_name'].present?
+          widget_data[:icon_color] = parsed_data['icon_color'] if parsed_data['icon_color'].present?
+        end
+
+        return [widget_data]
+      rescue JSON::ParserError => e
+        return []
       end
     end
 end

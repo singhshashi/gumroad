@@ -950,6 +950,20 @@ const WidgetFormModal = ({
         <aside aria-label="Preview">
           <header>
             <h2>Preview</h2>
+            <Button
+              onClick={() => {
+                const selectedProduct =
+                  products.find((p) => formData.universal || formData.link_ids.includes(p.id)) || products[0];
+                if (selectedProduct) {
+                  const previewUrl = `${selectedProduct.url}?preview_widget=${widget?.id || "new"}&preview_data=${encodeURIComponent(JSON.stringify(getPreviewWidgetData()))}`;
+                  window.open(previewUrl, "_blank");
+                }
+              }}
+              disabled={!products.length}
+              style={{ marginLeft: "auto" }}
+            >
+              <Icon name="arrow-diagonal-up-right" />
+            </Button>
           </header>
           <div
             style={{

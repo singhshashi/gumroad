@@ -24,6 +24,7 @@ export type SocialProofWidgetData = {
     members_count: number;
     thumbnail_url?: string;
   } | null;
+  preview_mode?: boolean; // True when in preview mode
 };
 
 type SocialProofWidgetProps = {
@@ -63,6 +64,11 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
   }, [isVisible, hasAnimated, widget.id, disableAnalytics]);
 
   const handleClose = () => {
+    // In preview mode, don't allow closing the widget
+    if (widget.preview_mode) {
+      return;
+    }
+    
     if (!disableAnalytics) {
       void trackWidgetClose(widget.id);
     }
@@ -198,6 +204,7 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         {
           "social-proof-widget--animated": hasAnimated,
           "social-proof-widget--with-image": widget.image_type !== "none",
+          "preview-mode": widget.preview_mode,
         },
         className,
       )}
@@ -213,24 +220,26 @@ export const SocialProofWidget: React.FC<SocialProofWidgetProps> = ({
         lineHeight: "1.4",
       }}
     >
-      <button
-        onClick={handleClose}
-        className="social-proof-widget__close"
-        aria-label="Close"
-        style={{
-          position: "absolute",
-          top: "8px",
-          right: "8px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#9ca3af",
-          fontSize: "16px",
-          padding: "2px",
-        }}
-      >
-        <Icon name="x" />
-      </button>
+      {!widget.preview_mode && (
+        <button
+          onClick={handleClose}
+          className="social-proof-widget__close"
+          aria-label="Close"
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "#9ca3af",
+            fontSize: "16px",
+            padding: "2px",
+          }}
+        >
+          <Icon name="x" />
+        </button>
+      )}
 
       <div
         className="social-proof-widget__content"
@@ -351,13 +360,36 @@ export const SocialProofWidgetContainer: React.FC<{
 
   if (widgets.length === 0 || !selectedWidget) return null;
 
+  const isPreviewMode = selectedWidget.preview_mode;
+
   return (
     <div className="social-proof-widget-container">
+      {isPreviewMode ? (
+        <div
+          style={{
+            backgroundColor: "#fef3c7",
+            border: "1px solid #f59e0b",
+            borderRadius: "6px",
+            padding: "8px 12px",
+            marginBottom: "16px",
+            fontSize: "12px",
+            color: "#92400e",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <Icon name="info-circle" />
+          <span>
+            <strong>Preview Mode:</strong> This widget is being previewed and won't track analytics.
+          </span>
+        </div>
+      ) : null}
       <SocialProofWidget
         widget={selectedWidget}
         productData={productData}
         onAction={onAction}
-        disableAnalytics={false}
+        disableAnalytics={isPreviewMode || false}
       />
     </div>
   );
