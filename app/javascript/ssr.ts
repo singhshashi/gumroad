@@ -34,6 +34,7 @@ import BalancePage from "$app/components/server-components/BalancePage";
 import BundleEditPage from "$app/components/server-components/BundleEditPage";
 import DiscountsPage from "$app/components/server-components/CheckoutDashboard/DiscountsPage";
 import FormPage from "$app/components/server-components/CheckoutDashboard/FormPage";
+import SocialProofWidgetsPage from "$app/components/server-components/CheckoutDashboard/SocialProofWidgetsPage";
 import UpsellsPage from "$app/components/server-components/CheckoutDashboard/UpsellsPage";
 import CheckoutPage from "$app/components/server-components/CheckoutPage";
 import CollaboratorsPage from "$app/components/server-components/CollaboratorsPage";
@@ -184,6 +185,7 @@ ReactOnRails.register({
   ReviewsPage,
   SecureRedirectPage,
   SignupPage,
+  SocialProofWidgetsPage,
   SubscribePage,
   SubscribePreview,
   SubscribeReviewReminders,

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_25_212934) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_10_180143) do
   create_table "active_storage_attachments", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "name", limit: 191, null: false
     t.string "record_type", limit: 191, null: false
@@ -2075,6 +2075,51 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_25_212934) do
     t.index ["variant_id"], name: "index_skus_variants_on_variant_id"
   end
 
+  create_table "social_proof_widget_attributions", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "social_proof_widget_id", null: false
+    t.bigint "purchase_id", null: false
+    t.bigint "attributed_amount_cents", null: false
+    t.string "attribution_status", default: "pending", null: false
+    t.string "rejection_reason"
+    t.datetime "cookie_set_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attribution_status"], name: "index_social_proof_widget_attributions_on_attribution_status"
+    t.index ["purchase_id"], name: "index_social_proof_widget_attributions_on_purchase_id"
+    t.index ["social_proof_widget_id"], name: "idx_on_social_proof_widget_id_03b58865e8"
+  end
+
+  create_table "social_proof_widgets", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.boolean "universal", default: false, null: false
+    t.string "widget_type", default: "purchases", null: false
+    t.text "title", size: :tiny
+    t.text "message_end", size: :tiny
+    t.string "cta_text"
+    t.string "cta_type", default: "none", null: false
+    t.string "image_type", default: "none", null: false
+    t.integer "flags", default: 0
+    t.text "json_data"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_social_proof_widgets_on_deleted_at"
+    t.index ["user_id", "universal"], name: "index_social_proof_widgets_on_user_id_and_universal"
+    t.index ["user_id"], name: "index_social_proof_widgets_on_user_id"
+  end
+
+  create_table "social_proof_widgets_links", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "social_proof_widget_id", null: false
+    t.bigint "link_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["link_id", "social_proof_widget_id"], name: "index_social_proof_widgets_links_reverse"
+    t.index ["link_id"], name: "index_social_proof_widgets_links_on_link_id"
+    t.index ["social_proof_widget_id", "link_id"], name: "index_social_proof_widgets_links_unique", unique: true
+    t.index ["social_proof_widget_id"], name: "index_social_proof_widgets_links_on_social_proof_widget_id"
+  end
+
   create_table "staff_picked_products", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.datetime "deleted_at"
@@ -2717,4 +2762,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_25_212934) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "social_proof_widget_attributions", "purchases", name: "_fk_rails_75966c7e1c"
+  add_foreign_key "social_proof_widget_attributions", "social_proof_widgets", name: "_fk_rails_e6f78f50eb"
+  add_foreign_key "social_proof_widgets", "users"
+  add_foreign_key "social_proof_widgets_links", "links"
+  add_foreign_key "social_proof_widgets_links", "social_proof_widgets"
 end

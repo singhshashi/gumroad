@@ -122,6 +122,7 @@ class User < ApplicationRecord
   has_many :last_read_community_chat_messages, dependent: :destroy
   has_many :community_notification_settings, dependent: :destroy
   has_many :seller_community_chat_recaps, class_name: "CommunityChatRecap", foreign_key: :seller_id, dependent: :destroy
+  has_many :social_proof_widgets, dependent: :destroy
 
   has_one_attached :avatar
   attr_accessor :avatar_changed

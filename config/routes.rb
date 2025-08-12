@@ -86,6 +86,20 @@ Rails.application.routes.draw do
         end
       end
     end
+
+    resources :social_proof_widgets, only: [] do
+      member do
+        if named_routes
+          post :impression, as: :impression
+          post :click, as: :click
+          post :close, as: :close
+        else
+          post :impression
+          post :click
+          post :close
+        end
+      end
+    end
   end
 
   def product_info_and_purchase_routes(named_routes: true)
@@ -479,6 +493,13 @@ Rails.application.routes.draw do
         get :paged, on: :collection
         get :cart_item, on: :collection
         get :statistics, on: :member
+      end
+      resources :social_proof_widgets, only: %i[index show create update destroy] do
+        get :paged, on: :collection
+        get :analytics, on: :collection
+        post :publish, on: :member
+        post :unpublish, on: :member
+        post :duplicate, on: :member
       end
       namespace :upsells do
         resources :products, only: [:index, :show]

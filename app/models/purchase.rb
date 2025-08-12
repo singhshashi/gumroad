@@ -97,6 +97,10 @@ class Purchase < ApplicationRecord
   has_one :utm_link_driven_sale
   has_one :utm_link, through: :utm_link_driven_sale
 
+  # Social proof widget attribution
+  has_one :social_proof_widget_attribution, dependent: :destroy
+  has_one :social_proof_widget, through: :social_proof_widget_attribution
+
   has_many :balance_transactions
   belongs_to :purchase_success_balance, class_name: "Balance", optional: true
   belongs_to :purchase_chargeback_balance, class_name: "Balance", optional: true
@@ -359,6 +363,9 @@ class Purchase < ApplicationRecord
   after_commit :enqueue_update_sales_related_products_infos_job, if: -> (purchase) {
     purchase.purchase_state_previously_changed? && purchase.purchase_state == "successful"
   }
+
+  # Social proof widget attribution
+  after_commit :validate_social_proof_widget_attribution, on: [:create, :update], if: :successful_purchase?
 
   # Entities that store the product price, tax information and transaction price
 
@@ -3847,5 +3854,20 @@ class Purchase < ApplicationRecord
 
     def fetch_installment_plan
       installment_plan || subscription&.last_payment_option&.installment_plan
+    end
+
+    # Social proof widget attribution methods
+    def attributed_to_social_proof_widget?
+      social_proof_widget_attribution&.confirmed?
+    end
+
+    def validate_social_proof_widget_attribution
+      return unless social_proof_widget_attribution&.pending?
+
+      SocialProofWidgetAttributionService.validate_attribution(social_proof_widget_attribution)
+    end
+
+    def successful_purchase?
+      purchase_state_previously_changed? && purchase_state.in?(Purchase::ALL_SUCCESS_STATES)
     end
 end

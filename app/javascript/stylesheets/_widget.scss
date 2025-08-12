@@ -33,3 +33,398 @@
     transform: translate(-50%, -50%);
   }
 }
+// Social Proof Widget Styles
+
+.social-proof-widget-container {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  max-width: 400px;
+
+  @media (max-width: 768px) {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    max-width: none;
+  }
+}
+
+.social-proof-widget {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  position: relative;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease-out;
+  margin-bottom: 12px;
+  min-width: 280px;
+  max-width: 400px;
+
+  &--animated {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    padding: 14px;
+    border-radius: 8px;
+  }
+
+  &__close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    i {
+      font-size: 14px;
+    }
+  }
+
+  &__content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    @media (max-width: 480px) {
+      gap: 8px;
+    }
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0 0 4px 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+
+    @media (max-width: 480px) {
+      font-size: 11px;
+    }
+  }
+
+  &__description {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    line-height: 1.4;
+
+    @media (max-width: 480px) {
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+  }
+
+  .widget-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+
+    @media (max-width: 480px) {
+      width: 60px;
+      height: 60px;
+    }
+  }
+
+  .widget-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid;
+    flex-shrink: 0;
+    
+    // Only set default background and border if no custom color
+    &:not(.widget-icon--custom-color) {
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+    }
+
+    @media (max-width: 480px) {
+      width: 40px;
+      height: 40px;
+    }
+
+    // The actual icon inside the container
+    &__svg {
+      font-size: 16px;
+      
+      @media (max-width: 480px) {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .widget-cta-button {
+    font-size: 14px !important;
+    padding: 12px 16px !important;
+    height: auto !important;
+    min-height: 44px !important;
+
+    @media (max-width: 480px) {
+      font-size: 12px !important;
+      padding: 10px 14px !important;
+      min-height: 38px !important;
+    }
+  }
+
+  .widget-cta-link {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #1d4ed8;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 11px;
+    }
+  }
+
+  // Dark theme support
+  @media (prefers-color-scheme: dark) {
+    .social-proof-widget {
+      background: #1f2937;
+      border-color: #374151;
+
+    &__close {
+      color: #9ca3af;
+
+      &:hover {
+        background: #374151;
+        color: #d1d5db;
+      }
+    }
+
+    &__title {
+      color: #f9fafb;
+    }
+
+    &__description {
+      color: #9ca3af;
+    }
+
+    .widget-icon {
+      // Only set default dark background and border if no custom color
+      &:not(.widget-icon--custom-color) {
+        background: #374151;
+        border-color: #4b5563;
+      }
+
+      &__svg {
+        color: #9ca3af;
+      }
+    }
+
+    .widget-cta-link {
+      color: #60a5fa;
+
+      &:hover {
+        color: #93c5fd;
+      }
+    }
+    }
+  }
+
+  // Animation variants
+  &--slide-in {
+    transform: translateX(-100%);
+
+    &.social-proof-widget--animated {
+      transform: translateX(0);
+    }
+  }
+
+  &--fade-in {
+    opacity: 0;
+    transform: scale(0.9);
+
+    &.social-proof-widget--animated {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  // Mobile specific styles
+  @media (max-width: 480px) {
+    &__content {
+      flex-direction: column;
+      text-align: center;
+
+      .widget-image,
+      .widget-icon {
+        align-self: center;
+        margin-bottom: 8px;
+      }
+    }
+
+    &--with-image {
+      .social-proof-widget__content {
+        flex-direction: row;
+        text-align: left;
+
+        .widget-image,
+        .widget-icon {
+          margin-bottom: 0;
+          align-self: flex-start;
+        }
+      }
+    }
+  }
+
+  // Hover effects
+  &:hover {
+    @media (max-width: 768px) {
+      transform: none;
+    }
+  }
+
+  // High contrast mode support
+  @media (prefers-contrast: high) {
+    border: 2px solid #000;
+
+    &__title {
+      font-weight: 700;
+    }
+
+    .widget-cta-button {
+      border: 2px solid currentColor !important;
+    }
+  }
+
+  // Reduced motion support
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+
+    &--animated {
+      animation: none;
+    }
+  }
+}
+
+// Multiple widgets container
+.social-proof-widget-container {
+  .social-proof-widget + .social-proof-widget {
+    margin-top: 8px;
+  }
+}
+
+// Integration with existing checkout styles
+.checkout-page {
+  .social-proof-widget-container {
+    bottom: 80px; // Account for checkout footer
+  }
+}
+
+// Integration with product page
+.product-page {
+  .social-proof-widget-container {
+    @media (max-width: 768px) {
+      bottom: 20px; // More space on mobile product pages
+    }
+  }
+}
+
+// Preview mode overrides
+.social-proof-widget.preview-mode {
+  // Ensure it's positioned statically in preview
+  position: static !important;
+  // Force visible state for preview
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  
+  // Remove hover effects in preview
+  &:hover {
+    transform: translateY(0) !important;
+  }
+}
+
+// Icon selection buttons for widget creation form
+.icon-select-button {
+  &[role="radio"] {
+    border: 1px solid #000000 !important;
+    background: white !important;
+    
+    &[aria-checked="true"] {
+      border: 1px solid #000000 !important;
+      background: white !important;
+    }
+    
+    &:hover {
+      border-color: #000000 !important;
+      
+      &[aria-checked="true"] {
+        border-color: #000000 !important;
+      }
+    }
+  }
+}
+
+// Template validation error styles
+.field-errors {
+  margin-top: 4px;
+  
+  .error-message {
+    color: #dc2626;
+    font-size: 12px;
+    line-height: 1.3;
+    margin-bottom: 2px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Error state for inputs
+input.error,
+textarea.error {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 1px #dc2626 !important;
+}
+
+// Dark mode error styles
+@media (prefers-color-scheme: dark) {
+  .field-errors {
+    .error-message {
+      color: #fca5a5;
+    }
+  }
+  
+  input.error,
+  textarea.error {
+    border-color: #fca5a5 !important;
+    box-shadow: 0 0 0 1px #fca5a5 !important;
+  }
+}

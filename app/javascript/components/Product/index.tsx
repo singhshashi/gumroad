@@ -54,6 +54,7 @@ import { Review as ReviewComponent } from "$app/components/Review";
 import { ReviewForm, Review as FormReview } from "$app/components/ReviewForm";
 import { useRichTextEditor } from "$app/components/RichTextEditor";
 import { showAlert } from "$app/components/server-components/Alert";
+import { SocialProofWidgetContainer, SocialProofWidgetData } from "$app/components/SocialProofWidget";
 import { PublicFileEmbed } from "$app/components/TiptapExtensions/PublicFileEmbed";
 import { ReviewCard } from "$app/components/TiptapExtensions/ReviewCard";
 import { UpsellCard } from "$app/components/TiptapExtensions/UpsellCard";
@@ -137,6 +138,7 @@ export type Product = {
   }[];
   public_files: PublicFile[];
   audio_previews_enabled: boolean;
+  social_proof_widgets?: SocialProofWidgetData[];
 };
 export type Purchase = {
   id: string;
@@ -593,6 +595,37 @@ export const Product = ({
         </section>
         {product.ratings ? <Reviews ratings={product.ratings} productId={product.id} seller={product.seller} /> : null}
       </section>
+      {product.social_proof_widgets && product.social_proof_widgets.length > 0 ? (
+        <SocialProofWidgetContainer
+          widgets={product.social_proof_widgets}
+          productData={
+            product.social_proof_widgets[0]?.product_data
+              ? {
+                  sales_count: product.social_proof_widgets[0].product_data.sales_count,
+                  members_count: product.social_proof_widgets[0].product_data.members_count,
+                  ...(() => {
+                    const thumbnailUrl =
+                      product.social_proof_widgets[0].product_data.thumbnail_url ||
+                      product.covers.find((cover) => cover.id === product.main_cover_id)?.url ||
+                      product.covers[0]?.url;
+                    return thumbnailUrl ? { thumbnail_url: thumbnailUrl } : {};
+                  })(),
+                }
+              : {
+                  sales_count: product.sales_count || 0,
+                  members_count: 0,
+                  ...(() => {
+                    const thumbnailUrl =
+                      product.covers.find((cover) => cover.id === product.main_cover_id)?.url || product.covers[0]?.url;
+                    return thumbnailUrl ? { thumbnail_url: thumbnailUrl } : {};
+                  })(),
+                }
+          }
+          onAction={() => {
+            ctaButtonRef?.current?.click();
+          }}
+        />
+      ) : null}
     </article>
   );
 };
