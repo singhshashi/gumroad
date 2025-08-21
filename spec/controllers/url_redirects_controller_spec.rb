@@ -1010,6 +1010,16 @@ describe UrlRedirectsController do
         end
 
         it "replaces the links to the playlists with signed urls" do
+          allow_any_instance_of(ProductFile).to receive(:signed_cloudfront_url) do |instance, url, **kwargs|
+            case url
+            when /hls_480p_\.m3u8/
+              "https://d1jmbc8d0c0hid.cloudfront.net/attachments/2_1/original/chapter2/hls/hls_480p_.m3u8?Expires=1390824000&Signature=Bfxuje0vDkMalfNebd5K4rRzZuSCUUP7R3d0LILa1P17fSU7jnd/I7dLrzlF2mQjhP4qO2IJnKnbnp9KfiU76eENu0L0b+Li/CgwWdtGFY4o162TN0TgWacERoaK6krAPlyeit32zoK4Ua5T34plvE7BfUlsrv8OHmr1dE75FEo=&Key-Pair-Id=APKAISH5PKOS7WQUJ6SA"
+            when /hls_720p_\.m3u8/
+              "https://d1jmbc8d0c0hid.cloudfront.net/attachments/2_1/original/chapter2/hls/hls_720p_.m3u8?Expires=1390824000&Signature=WBaT6Vq9r4HQohMAMOGVZuB9GgLa2xd232p9t57qAsvpcC8sCend3xvE9f/CBu/3GPOlVFlBPRLxYXG8xDhBFo2j7YegVyETNiQ5UoUIYyzWh9y5r0LXbplhtiiOEoeAgb+k+X/JSQB/blIrZ7D64AnYzhkfUdsI7gyqSO4+bAM=&Key-Pair-Id=APKAISH5PKOS7WQUJ6SA"
+            else
+              url
+            end
+          end
           travel_to(Date.parse("2014-01-27")) do
             get :hls_playlist, params: { id: @multifile_url_redirect.token, product_file_id: @file_1.id }
           end
@@ -1026,6 +1036,16 @@ describe UrlRedirectsController do
         end
 
         it "urls encode the playlist urls" do
+          allow_any_instance_of(ProductFile).to receive(:signed_cloudfront_url) do |instance, url, **kwargs|
+            case url
+            when /chapter\+2\+of\+5.*hls_480p_\.m3u8/
+              "https://d1jmbc8d0c0hid.cloudfront.net/attachments/2_1/original/chapter+2+of+5+%281280%2A720%29/hls/hls_480p_.m3u8?Expires=1390824000&Signature=FfsrujMgokLB+hwcLP5Jrtj/t7I3vsOtsqYVqbRj6dwdL5kD4yHCi+x6nqp2h0K2Oc3Pc/vE6Hf6xzDB3GucUTD/c8Omv7YNGhDEaHgRkZF/UeIzQyStiXgFuhJDcV6BF7idGg2B67EV5lWT6Xvb/d80x8lx3+Fh2z0nNhHngf4=&Key-Pair-Id=APKAISH5PKOS7WQUJ6SA"
+            when /chapter\+2\+of\+5.*hls_720p_\.m3u8/
+              "https://d1jmbc8d0c0hid.cloudfront.net/attachments/2_1/original/chapter+2+of+5+%281280%2A720%29/hls/hls_720p_.m3u8?Expires=1390824000&Signature=gIpa3UtEum+imD2joAmK1Oe8qniRoWz0olqh4lLBaKCy0iPz9yTOJKl6hy8NfGw8sHBBzS7LGwazj1vm446eZfEEKERvdtP02B8pt4TfICihx4L2ercnP39OQIe7giLSbbSiw1lFT+GScYYZrTJQEjIbuemEzEBedp4WbUh0U+w=&Key-Pair-Id=APKAISH5PKOS7WQUJ6SA"
+            else
+              url
+            end
+          end
           @file_1.update_column(:url, "https://s3.amazonaws.com/gumroad-specs/attachments/2/original/chapter 2 of 5 (1280*720).mp4")
           @transcoded_video.update_column(:transcoded_video_key, "attachments/2_1/original/chapter 2 of 5 (1280*720)/hls/index.m3u8")
           travel_to(Date.parse("2014-01-27")) do
@@ -1044,6 +1064,16 @@ describe UrlRedirectsController do
         end
 
         it "escapes RFC 3986 2.2 reserved characters in the file name" do
+          allow_any_instance_of(ProductFile).to receive(:signed_cloudfront_url) do |instance, url, **kwargs|
+            case url
+            when /me%2Byou.*hls_480p_\.m3u8/
+              "https://d1jmbc8d0c0hid.cloudfront.net/attachments/2_1/original/me%2Byou/hls/hls_480p_.m3u8?Expires=1390824000&Signature=wsbm5kN7vYjkVGbk/rn8qdSBZy7D6n4j/uSblT0tjxhj2IfOfoWrH5MnFxjXsDsD5qP0oosVA12dcBOXIa/zUc6hoZq0STKKyVvKY/GOYyMfxO+NzbNu/etWKjsncjbZt4kwEoh6BAPnRJjqBReK722RoTJ/EnPgLSpZGywTnSY=&Key-Pair-Id=APKAISH5PKOS7WQUJ6SA"
+            when /me%2Byou.*hls_720p_\.m3u8/
+              "https://d1jmbc8d0c0hid.cloudfront.net/attachments/2_1/original/me%2Byou/hls/hls_720p_.m3u8?Expires=1390824000&Signature=gQhfUdJR15hBTYTKwXWIfkAlvAqCMrM9hBpOGHUJF1HSRaf5UeGyBjk4sotsAReT0SrIS8jUzt4SxOR/WPJ3H/Q2fYGEMd1T+f+4jmnEnBn4pQSULdWNO2zyZqP9S3ytaTILZn4OwNHFywRnxAZ6BX0D6Rm4kTuslaHgAlsrI6g=&Key-Pair-Id=APKAISH5PKOS7WQUJ6SA"
+            else
+              url
+            end
+          end
           @file_1.update_column(:url, "https://s3.amazonaws.com/gumroad-specs/attachments/2/original/me+you.mp4")
           @transcoded_video.update_column(:transcoded_video_key, "attachments/2_1/original/me+you/hls/index.m3u8")
           travel_to(Date.parse("2014-01-27")) do
